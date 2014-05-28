@@ -1,0 +1,7 @@
+*~
+*.bak
+*.log
+*.html
+.travis.yml
+
+test/

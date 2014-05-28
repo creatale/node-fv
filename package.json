@@ -1,0 +1,40 @@
+{
+  "name": "fv",
+  "version": "0.0.1",
+  "description": "FormVision is a node.js library for extracting data from scanned forms",
+  "keywords": [
+    "graphics",
+    "vision",
+    "barcode",
+    "barcodes",
+    "ocr",
+    "omr",
+    "checkbox",
+    "checkboxes",
+    "form",
+    "forms"
+  ],
+  "homepage": "https://github.com/creatale/node-fv",
+  "bugs": {
+    "url": "https://github.com/creatale/node-fv/issues"
+  },
+  "author": "Christoph Schulz <christoph.schulz@creatale.de>",
+  "contributors": [
+    "Wolfgang Fellger <wolfgang.fellger@creatale.de>"
+  ],
+  "main": "./lib/fv",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/creatale/node-fv.git"
+  },
+  "dependencies": {
+    "coffee-script": "~1.7",
+    "dv": "~1.7"
+  },
+  "devDependencies": {
+    "chai": "~1.9",
+    "coffee-coverage": "~0.4.2",
+    "open": "~0.0.5"
+  },
+  "license": "MIT"
+}
