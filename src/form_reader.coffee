@@ -62,7 +62,7 @@ module.exports = class FormReader
 
 		# Estimate schema to data transform and match checkboxes.
 		@schemaToFields = estimateTransform formSchema, formData, 1, 1, matchByPath
-		matchCheckboxes formData, formSchema, @checkboxes, @words, @schemaToPage, @schemaToFields, @image
+		matchCheckboxes formData, formSchema, @checkboxes, @words, @schemaToPage, @schemaToFields
 		
 		# Call form validators.
 		async.forEach formSchema, (field, nextField) ->

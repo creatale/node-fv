@@ -1,4 +1,4 @@
-log = require('log4js').getLogger 'translation'
+#log = require('log4js').getLogger 'translation'
 
 matchText = (word, words) ->
 	matches = (item for item in words when item.text is word.text)
@@ -57,7 +57,7 @@ module.exports.estimateTransform = (itemsA, itemsB, fallbackScale, requiredMatch
 							scale: [scaleX, scaleY]
 							offset: [itemB1.box.x - itemA1.box.x * scaleX, itemB1.box.y - itemA1.box.y * scaleY]
 
-	log.trace 'Candidate pairs:', transforms.length
+	#log.trace 'Candidate pairs:', transforms.length
 	if transforms.length > requiredMatchCount
 		# Aggregate matches to find a stable solution.
 		byDistX = transforms.sort (a, b) -> a.distance[0] - b.distance[0]
@@ -66,7 +66,7 @@ module.exports.estimateTransform = (itemsA, itemsB, fallbackScale, requiredMatch
 		byDistY = transforms.sort (a, b) -> a.distance[1] - b.distance[1]
 		scaleY = avgMedian3 (i.scale[1] for i in byDistY[-7..])
 		offsetY = avgMedian3 (i.offset[1] for i in byDistY[-7..])
-		log.trace 'Page translation:', [scaleX, scaleY], [offsetX, offsetY]
+		#log.trace 'Page translation:', [scaleX, scaleY], [offsetX, offsetY]
 	else
 		# Use fallback.
 		scaleX = fallbackScale
