@@ -19,19 +19,20 @@ cloneWithQuietZone = (image, rect) ->
 # Always returns an array; see `zxing.findCode()` for format.
 module.exports.findBarcodes = (image, zxing) ->
 	clearedImage = new dv.Image image
+	grayImage = image.toGray()
 	codes = []
-	for candidate in detectCandidates image
+	for candidate in detectCandidates grayImage
 		try
-			zxing.image = cloneWithQuietZone image, candidate
+			zxing.image = cloneWithQuietZone grayImage, candidate
 			code = zxing.findCode()
 			# Test if its worth a retry using some image morphing magic.
-			if not code? and candidate.width < 0.3 * image.width
+			if not code? and candidate.width < 0.3 * grayImage.width
 				# Apply some magic image morphing and retry.
-				zxing.image = zxing.image.scale(2).erode(5,3).dilate(5,3).scale(0.5).otsuAdaptiveThreshold(400, 400, 0, 0, 0.1).image
+				zxing.image = zxing.image.scale(2).open(5, 3).scale(0.5).otsuAdaptiveThreshold(400, 400, 0, 0, 0.1).image
 				code = zxing.findCode()
 			if code?
 				# Test if removal is sane
-				if candidate.width < 0.3 * image.width
+				if candidate.width < 0.3 * grayImage.width
 					clearedImage.clearBox candidate
 				code.box = boundingBox ({x: point.x, y: point.y, width: 1, height: 1} for point in code.points)
 				code.box.x += candidate.x - 25

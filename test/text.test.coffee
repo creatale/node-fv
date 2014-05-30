@@ -90,12 +90,12 @@ describe 'Text recognizer', ->
 		contentImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/m10-content.png'))
 		tesseract = new dv.Tesseract 'deu'
 		tesseract.pageSegMode = 'auto_osd'
-		tesseractSparse = new dv.Tesseract 'eng'
-		tesseractSparse.pageSegMode = 'single_line'
+		tesseract.classify_enable_learning = 0
+		tesseract.classify_enable_adaptive_matcher = 0
 		done()
 
 	it 'should find text (clean)', (done) ->
-		[words, image] = findText(contentImage, tesseract, tesseractSparse)
+		[words, image] = findText(contentImage, tesseract)
 		wordsToBeFound = contentWords.split(' ')
 		words.should.not.be.empty
 		# We expect our contentWords in order (but allow gaps)
@@ -111,32 +111,32 @@ describe 'Text recognizer', ->
 
 	it 'should match valid text', (done) ->
 		formData = {}
-		matchText formData, formSchema, fuzzyWords(true, 0), mockSchemaToPage, ->
-			formData.should.not.be.empty
-			done()
+		matchText formData, formSchema, fuzzyWords(true, 0), mockSchemaToPage, contentImage
+		formData.should.not.be.empty
+		done()
 
 	it 'should match valid and fuzzed (5) text', (done) ->
 		formData = {}
-		matchText formData, formSchema, fuzzyWords(true, 5), mockSchemaToPage, ->
-			formData.should.not.be.empty
-			done()
-
+		matchText formData, formSchema, fuzzyWords(true, 5), mockSchemaToPage, contentImage
+		formData.should.not.be.empty
+		done()
+		
 	it 'should match valid and fuzzed (15) text', (done) ->
 		formData = {}
-		matchText formData, formSchema, fuzzyWords(true, 15), mockSchemaToPage, ->
-			formData.should.not.be.empty
-			done()
-
+		matchText formData, formSchema, fuzzyWords(true, 15), mockSchemaToPage, contentImage
+		formData.should.not.be.empty
+		done()
+	
 	it 'should match valid and fuzzed (20) text', (done) ->
 		formData = {}
-		matchText formData, formSchema, fuzzyWords(true, 20), mockSchemaToPage, ->
-			formData.should.not.be.empty
-			should.exist formData.lineOne.wordTwo.value
-			formData.lineOne.wordTwo.value.should.equal '1234'
-			done()
+		matchText formData, formSchema, fuzzyWords(true, 20), mockSchemaToPage, contentImage
+		formData.should.not.be.empty
+		should.exist formData.lineOne.wordTwo.value
+		formData.lineOne.wordTwo.value.should.equal '1234'
+		done()
 
 	it 'should partially match invalid and fuzzed text', (done) ->
 		formData = {}
-		matchText formData, formSchema, fuzzyWords(true, 5), mockSchemaToPage, ->
-			formData.should.not.be.empty
-			done()
+		matchText formData, formSchema, fuzzyWords(true, 5), mockSchemaToPage, contentImage
+		formData.should.not.be.empty
+		done()

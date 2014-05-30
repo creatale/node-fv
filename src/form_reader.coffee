@@ -22,6 +22,7 @@ module.exports = class FormReader
 	constructor: (language, @image = null) ->
 		# Initialize DocumentVision instances.
 		@tesseract = new dv.Tesseract language
+		@tesseract.pageSegMode = 'auto_osd'
 		@tesseract.classify_enable_learning = 0
 		@tesseract.classify_enable_adaptive_matcher = 0
 		#@tesseract.tessedit_char_whitelist = 'ÄÖÜABCDEFGHIJKLMNOPQRSTUVWXYZäöüabcdefghijklmnopqrstuvwxyz+-.,;:§[]'

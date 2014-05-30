@@ -5,6 +5,7 @@ unpack = require './unpack'
 #
 # Assumes words are put in reading order by Tesseract.
 module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage) ->
+	grayImage = rawImage.toGray()
 	textFields = formSchema.filter((field) -> field.type is 'text')
 	anchors = []
 	anchorFields = []
@@ -79,7 +80,7 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 				selectedArea = selectedWords[0]?.box
 				for word in selectedWords[1..]
 					selectedArea = enclosingRectangle selectedArea, word.box
-				confidence = getConfidence selectedWords, box, rawImage
+				confidence = getConfidence selectedWords, box, grayImage
 
 				validatingVariants.push
 					value: fieldContentCandidate
@@ -161,7 +162,7 @@ toText = (words) ->
 
 	return result
 
-getConfidence = (words, placement, rawImage) ->
+getConfidence = (words, placement, grayImage) ->
 	if words?.length > 0
 		result = 100
 		for {confidence} in words
@@ -169,9 +170,9 @@ getConfidence = (words, placement, rawImage) ->
 		return Math.floor result
 	else
 		# Text allegedly empty; look whether there are any letter-sized blobs in actual image
-		cropped = rawImage.crop placement.x - 5, placement.y - 5,
+		cropped = grayImage.crop placement.x - 5, placement.y - 5,
 				placement.width + 10, placement.height + 10
-		blobs = (comp for comp in cropped.dilate(3,5).connectedComponents(8) when comp.width > 8 and comp.height > 14)
+		blobs = (component for component in cropped.dilate(3, 5).connectedComponents(8) when component.width > 8 and component.height > 14)
 		if blobs.length is 0
 			return 99
 		else if blobs.length is 1

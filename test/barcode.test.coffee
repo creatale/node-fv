@@ -14,7 +14,8 @@ describe 'Barcode recognizer', ->
 		zxing = new dv.ZXing()
 		done()
 
-	it 'should find barcodes', ->
+	it 'should find barcodes', (done) ->
 		[barcodes, imageOut] = findBarcodes contentImage, zxing
 		barcodes.should.not.be.empty
 		imageOut.should.not.equal contentImage
+		done()
