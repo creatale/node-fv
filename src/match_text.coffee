@@ -170,6 +170,9 @@ getConfidence = (words, placement, grayImage) ->
 		return Math.floor result
 	else
 		# Text allegedly empty; look whether there are any letter-sized blobs in actual image
+		unless placement? and 0 < placement.y < grayImage.height and 0 < placement.x < grayImage.width
+			# Sanity check: Box is undefined or off-paper. TODO warning?
+			return 0
 		cropped = grayImage.crop placement.x - 5, placement.y - 5,
 				placement.width + 10, placement.height + 10
 		blobs = (component for component in cropped.dilate(3, 5).connectedComponents(8) when component.width > 8 and component.height > 14)
