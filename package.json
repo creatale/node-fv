@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "coffee-script": "~1.7",
+    "async": "~0.7",
     "dv": "~1.7"
   },
   "devDependencies": {
