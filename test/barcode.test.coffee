@@ -19,3 +19,8 @@ describe 'Barcode recognizer', ->
 		barcodes.should.not.be.empty
 		imageOut.should.not.equal contentImage
 		done()
+
+	it 'should match barcodes', (done) ->
+		#TODO: NYI.
+		should.exist(null)
+		done()

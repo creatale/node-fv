@@ -18,3 +18,23 @@ describe 'Checkbox recognizer', ->
 		imageOut.should.not.equal contentImage
 		checkboxes.some((checkbox) -> Math.abs(checkbox.box.x - femaleBox.x) < 10).should.be.ok
 		done()
+
+	it 'should match checkboxes (mark)', (done) ->
+		#TODO: NYI.
+		should.exist(null)
+		done()
+
+	it 'should match checkboxes (word)', (done) ->
+		#TODO: NYI.
+		should.exist(null)
+		done()
+
+	it 'should match checkboxes (empty)', (done) ->
+		#TODO: NYI.
+		should.exist(null)
+		done()
+
+	it 'should match checkboxes (white)', (done) ->
+		#TODO: NYI.
+		should.exist(null)
+		done()
