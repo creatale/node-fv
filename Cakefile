@@ -21,8 +21,9 @@ task 'test', 'Run tests.', ->
 
 task 'test-cov', 'Run tests, generating a coverage report', ->
 	fs = require 'fs'
+	path = require 'path'
 	timestamp = (new Date()).toISOString().replace(/[:.]/g, '-')
-	filename = 'test-' + timestamp + '.html'
+	filename = path.join 'test', 'log', 'cov-' + timestamp + '.html'
 	console.log 'Generating ' + filename
 	stream = fs.openSync filename, 'w'
 	mocha = spawn mocha, ['--require', './test/mocha.coverage.js', '--reporter', 'html-cov', 'test'],
@@ -30,6 +31,5 @@ task 'test-cov', 'Run tests, generating a coverage report', ->
 	mocha.on 'exit', (status) ->
 		try
 			open = require 'open'
-			path = require 'path'
 			open(path.join(__dirname, filename), 'chrome')
 		return process.exit(status)
