@@ -3,16 +3,17 @@ dv = require 'dv'
 
 # Find potential barcodes in *image*.
 detectCandidates = (image) ->
-	open = image.thin('bg', 8, 5).dilate(3, 3)
-	openMap = open.distanceFunction(8)
-	openMask = openMap.threshold(10).erode(11*2, 11*2)
-	return openMask.invert().connectedComponents(8)
+	blobImage = image.thin('bg', 8, 5).dilate(3, 3)
+	blobMap = blobImage.distanceFunction(8)
+	blobMask = blobMap.threshold(10).invert().dilate(22, 22)
+	return blobMask.connectedComponents(8)
 
+# Clone image with artificial quiet zone.
 cloneWithQuietZone = (image, rect) ->
 	cropped = image.crop rect
-	clone = new dv.Image cropped.width + 50, cropped.height, cropped.depth
+	clone = new dv.Image cropped.width + 50, cropped.height + 50, cropped.depth
 	clone.clearBox 0, 0, clone.width, clone.height
-	clone.drawImage cropped, 25, 0, cropped.width, cropped.height
+	clone.drawImage cropped, 25, 25, cropped.width, cropped.height
 	return clone
 
 # Find all barcodes in *image* using the given *zxing* instance.
@@ -23,7 +24,9 @@ module.exports.findBarcodes = (image, zxing) ->
 	codes = []
 	for candidate in detectCandidates grayImage
 		try
+			couldBeRotated = candidate.height * 1.75 > candidate.width
 			zxing.image = cloneWithQuietZone grayImage, candidate
+			zxing.tryHarder = couldBeRotated
 			code = zxing.findCode()
 			# Test if its worth a retry using some image morphing magic.
 			if not code? and candidate.width < 0.3 * grayImage.width
@@ -31,7 +34,7 @@ module.exports.findBarcodes = (image, zxing) ->
 				zxing.image = zxing.image.scale(2).open(5, 3).scale(0.5).otsuAdaptiveThreshold(400, 400, 0, 0, 0.1).image
 				code = zxing.findCode()
 			if code?
-				# Test if removal is sane
+				# Test if removal is sane.
 				if candidate.width < 0.3 * grayImage.width
 					clearedImage.clearBox candidate
 				code.box = boundingBox ({x: point.x, y: point.y, width: 1, height: 1} for point in code.points)
