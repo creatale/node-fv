@@ -1,6 +1,9 @@
 dv = require 'dv'
 {boundingBox} = require './box_math'
 
+# Width of the quiet zone around a barcode.
+QUIETZONE_WIDTH = 25
+
 # Find potential barcodes in *image*.
 detectCandidates = (image) ->
 	blobImage = image.thin('bg', 8, 5).dilate(3, 3)
@@ -11,9 +14,9 @@ detectCandidates = (image) ->
 # Clone image with artificial quiet zone.
 cloneWithQuietZone = (image, rect) ->
 	cropped = image.crop rect
-	clone = new dv.Image cropped.width + 50, cropped.height + 50, cropped.depth
+	clone = new dv.Image cropped.width + QUIETZONE_WIDTH * 2, cropped.height + QUIETZONE_WIDTH * 2, cropped.depth
 	clone.clearBox 0, 0, clone.width, clone.height
-	clone.drawImage cropped, 25, 25, cropped.width, cropped.height
+	clone.drawImage cropped, QUIETZONE_WIDTH, QUIETZONE_WIDTH, cropped.width, cropped.height
 	return clone
 
 # Find all barcodes in *image* using the given *zxing* instance.
@@ -38,8 +41,8 @@ module.exports.findBarcodes = (image, zxing) ->
 				if candidate.width < 0.3 * grayImage.width
 					clearedImage.clearBox candidate
 				code.box = boundingBox ({x: point.x, y: point.y, width: 1, height: 1} for point in code.points)
-				code.box.x += candidate.x - 25
-				code.box.y += candidate.y
+				code.box.x += candidate.x - QUIETZONE_WIDTH
+				code.box.y += candidate.y - QUIETZONE_WIDTH
 				delete code.points
 				codes.push code
 		catch exception
