@@ -62,7 +62,7 @@ for filename in imageFilenames
 			console.log 'darkenInk'
 			image = fv.filters.darkenInk image
 		# Read form.
-		formReader.image = image.toGray() #XXX: toGray() required?
+		formReader.image = image
 		result = formReader.find()
 		if formSchema?
 			result.match formSchema, (err, formData) =>
