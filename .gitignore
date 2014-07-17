@@ -4,6 +4,7 @@
 *~
 *.bak
 *.log
-*.html
 
 node_modules
+test/log/*.png
+test/log/*.html

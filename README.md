@@ -16,14 +16,11 @@ FormVision is a [node.js](http://nodejs.org) library for extracting data from sc
 
 ## Quick Start
 
-Install `fv` and `dv` and download [that image](https://github.com/creatale/node-fv/blob/master/test/data/m10-printed.png). Now run the following code snippet:
+Install `fv` and `dv` and download [that image](https://github.com/creatale/node-fv/blob/master/test/data/m10-printed.png). Now run the command-line interface:
 
-```coffee
-dv = require 'dv'
-fv = require 'fv'
+`coffee bin/cli.coffee --remove-red --deskew m10-printed.png`
 
-# TODO: simple, but meaningful example
-```
+TODO: add schema matching to demo
 
 ## License
 

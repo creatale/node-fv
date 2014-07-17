@@ -6,15 +6,35 @@ fs = require 'fs'
 
 describe 'Checkbox recognizer', ->
 	contentImage = null
-	femaleBox = { x: 902, y: 143, width: 24, height: 23 }
-	maleBox = { x: 1027, y: 143, width: 23, height: 23 }
+	femaleBox = { x: 1480, y: 300, width: 24, height: 23 }
 	
-	before ->
+	before (done) ->
 		contentImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/m10-content.png'))
+		done()
 
-	it 'should find checkboxes', ->
+	it 'should find checkboxes', (done) ->
 		[checkboxes, imageOut] = findCheckboxes contentImage
 		checkboxes.should.not.be.empty
 		imageOut.should.not.equal contentImage
-		checkboxes.some((entry) -> entry.placement.x is maleBox.x).should.be.ok
-		checkboxes.some((entry) -> entry.placement.x is femaleBox.x).should.be.ok
+		checkboxes.some((checkbox) -> Math.abs(checkbox.box.x - femaleBox.x) < 10).should.be.ok
+		done()
+
+	it 'should match checkboxes (mark)', (done) ->
+		#TODO: NYI.
+		should.exist(null)
+		done()
+
+	it 'should match checkboxes (word)', (done) ->
+		#TODO: NYI.
+		should.exist(null)
+		done()
+
+	it 'should match checkboxes (empty)', (done) ->
+		#TODO: NYI.
+		should.exist(null)
+		done()
+
+	it 'should match checkboxes (white)', (done) ->
+		#TODO: NYI.
+		should.exist(null)
+		done()

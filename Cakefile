@@ -6,7 +6,6 @@ cmd = (name) ->
 
 npm = cmd 'npm'
 mocha = cmd 'mocha'
-coffee = cmd 'coffee'
 
 task 'install', 'Install node.js packages', ->
 	spawn npm, ['install'], {cwd: '.', stdio: 'inherit'}
@@ -15,21 +14,21 @@ task 'update', 'Update node.js packages', ->
 	spawn npm, ['update'], {cwd: '.', stdio: 'inherit'}
 
 task 'test', 'Run tests.', ->
-	mocha = spawn mocha, ['--reporter', 'spec', 'test'], {cwd: '.', stdio: 'inherit'}
+	mocha = spawn mocha, ['--reporter', 'spec'], {cwd: '.', stdio: 'inherit'}
 	mocha.on 'exit', (status) ->
 		return process.exit(status)
 
 task 'test-cov', 'Run tests, generating a coverage report', ->
 	fs = require 'fs'
+	path = require 'path'
 	timestamp = (new Date()).toISOString().replace(/[:.]/g, '-')
-	filename = 'test-' + timestamp + '.html'
+	filename = path.join 'test', 'log', 'cov-' + timestamp + '.log.html'
 	console.log 'Generating ' + filename
 	stream = fs.openSync filename, 'w'
-	mocha = spawn mocha, ['--require', './test/mocha.coverage.js', '--reporter', 'html-cov', 'test'],
+	mocha = spawn mocha, ['--require', './test/mocha.coverage.js', '--reporter', 'html-cov'],
 		{cwd: '.', stdio: ['ignore', stream, process.stderr]}
 	mocha.on 'exit', (status) ->
 		try
 			open = require 'open'
-			path = require 'path'
 			open(path.join(__dirname, filename), 'chrome')
 		return process.exit(status)

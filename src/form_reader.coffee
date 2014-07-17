@@ -18,51 +18,28 @@ matchByPath = (field, formData) ->
 		return unless tail?
 	return tail if tail?.box?
 
-module.exports = class FormReader
-	constructor: (language, @image = null) ->
-		# Initialize DocumentVision instances.
-		@tesseract = new dv.Tesseract language
-		@tesseract.classify_enable_learning = 0
-		@tesseract.classify_enable_adaptive_matcher = 0
-		#@tesseract.tessedit_char_whitelist = 'ÄÖÜABCDEFGHIJKLMNOPQRSTUVWXYZäöüabcdefghijklmnopqrstuvwxyz+-.,;:§[]'
-		#@tesseract.tessedit_consistent_reps = false
-		@zxing = new dv.ZXing()
-		@images = [@image, null, null, null]
-		@words = []
-		@barcodes = []
-		@checkboxes = []
-		@schemaToPage = null
-		@schemaToData = null
+class Form
+	constructor: (@data, @images) ->
 
-	find: (formSchema, cb) =>
-		# Reset data.
-		@images = [@image, null, null, null]
-		@words = []
-		@barcodes = []
-		@checkboxes = []
-		@schemaToPage = null
-		@schemaToData = null
+	match: (formSchema, cb) =>
 		formData = {}
 
-		# Extract data.
-		[@barcodes, @images[1]] = findBarcodes @images[0], @zxing
-		[@words, @images[2]] = findText @images[1], @tesseract
-		[@checkboxes, @images[3]] = findCheckboxes @images[2]
-
 		# Match barcodes invariant to transformation changes.
-		matchBarcodes formData, formSchema, @barcodes
+		matchBarcodes formData, formSchema, @data[1]
 
+		# Test if schema to page mapping was provided, estimate otherwise.
 		if typeof formSchema.schemaToPage is 'function'
-			@schemaToPage = formSchema.schemaToPage
+			schemaToPage = formSchema.schemaToPage
 		else if formSchema.page?
-			# Estimate transform between image and schema.
-			fallbackScale = @image.width / formSchema.page.width
-			@schemaToPage = estimateTransform formSchema.words, @words, fallbackScale
-		matchText formData, formSchema, @words, @schemaToPage, @image
+			fallbackScale = @images[0].width / formSchema.page.width
+			schemaToPage = estimateTransform formSchema.words, @data[2], fallbackScale
 
-		# Estimate schema to data transform and match checkboxes.
-		@schemaToFields = estimateTransform formSchema, formData, 1, 1, matchByPath
-		matchCheckboxes formData, formSchema, @checkboxes, @words, @schemaToPage, @schemaToFields, @image
+		# Match text and verify cleanliness of empty text fields.
+		matchText formData, formSchema, @data[2], schemaToPage, @images[0]
+
+		# Estimate schema to fields transform and match checkboxes.
+		schemaToFields = estimateTransform formSchema, formData, 1, 1, matchByPath
+		matchCheckboxes formData, formSchema, @data[3], @data[2], schemaToPage, schemaToFields
 		
 		# Call form validators.
 		async.forEach formSchema, (field, nextField) ->
@@ -74,30 +51,50 @@ module.exports = class FormReader
 			return cb err if err?
 			cb null, formData
 
-	logImage: =>
-		if @images.some((image) -> not image?)
-			throw new "FormReader#find() did not run"
+		return
 
-		imageBox = {x: 0, y: 0, width: @image.width, height: @image.height}
+	toImage: =>
+		resultImage = new dv.Image @images[0].width * @images.length, @images[0].height, 32
 		imageOffset = (box, index) =>
 			return {
-				x: box.x + @image.width * index
+				x: box.x + @images[0].width * index
 				y: box.y
 				width: box.width
 				height: box.height
 			}
 
-		logImage = new dv.Image @image.width * 4, @image.height, 32
-		for image, index in @images
-			logImage.drawImage(image.toColor(), imageOffset(imageBox, index))
+		imageBox = {x: 0, y: 0, width: @images[0].width, height: @images[0].height}
+		for image, index in @images when image?
+			resultImage.drawImage(image.toColor(), imageOffset(imageBox, index))
 
-		for barcode in @barcodes
-			logImage.drawBox(imageOffset(barcode.box, 0), 2, 255, 0, 0, 0.5)
+		for data, index in @data[1..] when data?
+			for boxed in data
+				resultImage.drawBox(imageOffset(boxed.box, index), 2, 0, 0, 255, 0.5)
 
-		for word in @words
-			logImage.drawBox(imageOffset(word.box, 1), 2, 255, 0, 0, 0.5)
+		return resultImage
 
-		for checkbox in @checkboxes
-			logImage.drawBox(imageOffset(checkbox.box, 2), 2, 255, 0, 0, 0.5)
+	toObject: =>
+		return {
+			barcodes: @data[1]
+			text: @data[2]
+			checkboxes: @data[3]
+		}
 
-		return logImage
+module.exports = class FormReader
+	constructor: (language = 'eng', @image = null) ->
+		@tesseract = new dv.Tesseract language
+		@tesseract.pageSegMode = 'auto_osd'
+		@tesseract.classify_enable_learning = 0
+		@tesseract.classify_enable_adaptive_matcher = 0
+		#@tesseract.tessedit_char_whitelist = 'ÄÖÜABCDEFGHIJKLMNOPQRSTUVWXYZäöüabcdefghijklmnopqrstuvwxyz+-.,;:§[]'
+		#@tesseract.tessedit_consistent_reps = false
+		@zxing = new dv.ZXing()
+
+	find: =>
+		data = [null, null, null, null]
+		images = [@image, null, null, null]
+		[data[1], images[1]] = findBarcodes images[0], @zxing
+		[data[2], images[2]] = findText images[1], @tesseract
+		[data[3], images[3]] = findCheckboxes images[2]
+		return new Form data, images
+		

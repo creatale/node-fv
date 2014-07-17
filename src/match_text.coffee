@@ -5,9 +5,11 @@ unpack = require './unpack'
 #
 # Assumes words are put in reading order by Tesseract.
 module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage) ->
-	textFields = formSchema.filter((field) -> field.type is 'text')
+	grayImage = rawImage.toGray()
+	textFields = formSchema.fields.filter((field) -> field.type is 'text')
 	anchors = []
 	anchorFields = []
+	anchorWords = []
 	# Try to find anchor words (unique matches).
 	for textField, fieldIndex in textFields
 		matches = []
@@ -16,6 +18,16 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 				matches.push wordIndex
 		if matches.length is 1
 			word = words[matches[0]]
+			if word in anchorWords
+				# Uniqueness check failed: This is at least the second field subscribing to `word`.
+				# Pull the existing one from anchors and skip this one completely.
+				#console.log 'Duplicate subscription on', word.text
+				for anchor, index in anchors
+					if anchor.word is word
+						anchors.splice index, 1
+						break
+				continue
+			
 			# Safeguard: Disregard matches that are too far off
 			fieldPos = schemaToPage textField.box
 			continue if Math.abs(word.box.x - fieldPos.x) + Math.abs(word.box.y - fieldPos.y) > 400
@@ -26,6 +38,7 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 					y: fieldPos.y - word.box.y
 				word: word
 			anchors.push anchor
+			anchorWords.push word
 			fieldData = unpack formData, textField.path
 			fieldData.value = word.text
 			fieldData.confidence = word.confidence
@@ -79,7 +92,7 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 				selectedArea = selectedWords[0]?.box
 				for word in selectedWords[1..]
 					selectedArea = enclosingRectangle selectedArea, word.box
-				confidence = getConfidence selectedWords, box, rawImage
+				confidence = getConfidence selectedWords, box, grayImage
 
 				validatingVariants.push
 					value: fieldContentCandidate
@@ -161,7 +174,7 @@ toText = (words) ->
 
 	return result
 
-getConfidence = (words, placement, rawImage) ->
+getConfidence = (words, placement, grayImage) ->
 	if words?.length > 0
 		result = 100
 		for {confidence} in words
@@ -169,9 +182,12 @@ getConfidence = (words, placement, rawImage) ->
 		return Math.floor result
 	else
 		# Text allegedly empty; look whether there are any letter-sized blobs in actual image
-		cropped = rawImage.crop placement.x - 5, placement.y - 5,
+		unless placement? and 0 < placement.y < grayImage.height and 0 < placement.x < grayImage.width
+			# Sanity check: Box is undefined or off-paper. TODO warning?
+			return 0
+		cropped = grayImage.crop placement.x - 5, placement.y - 5,
 				placement.width + 10, placement.height + 10
-		blobs = (comp for comp in cropped.dilate(3,5).connectedComponents(8) when comp.width > 8 and comp.height > 14)
+		blobs = (component for component in cropped.dilate(3, 5).connectedComponents(8) when component.width > 8 and component.height > 14)
 		if blobs.length is 0
 			return 99
 		else if blobs.length is 1
