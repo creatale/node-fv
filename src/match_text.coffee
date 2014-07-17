@@ -6,7 +6,7 @@ unpack = require './unpack'
 # Assumes words are put in reading order by Tesseract.
 module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage) ->
 	grayImage = rawImage.toGray()
-	textFields = formSchema.filter((field) -> field.type is 'text')
+	textFields = formSchema.fields.filter((field) -> field.type is 'text')
 	anchors = []
 	anchorFields = []
 	anchorWords = []

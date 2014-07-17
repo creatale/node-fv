@@ -5,68 +5,71 @@ fs = require 'fs'
 {findText} = require '../src/find_text'
 {matchText} = require '../src/match_text'
 
-formSchema = [
-	path: 'lineOne.wordOne'
-	type: 'text'
-	box:
-		x: 50
-		y: 23
-		width: 20
-		height: 15
-,
-	path: 'lineOne.wordTwo'
-	type: 'text'
-	box:
-		x: 60
-		y: 0
-		width: 20
-		height: 15
-	validValue: '1234' 
-	fieldValidator: (fieldData) -> /^\d+$/.test fieldData
-,
-	path: 'lineTwo.wordOne'
-	type: 'text'
-	box:
-		x: 0
-		y: 18
-		width: 40
-		height: 15
-	shouldValue: 'Hello' 
-,
-	path: 'lineTwoNHalf.wordOne'
-	type: 'text'
-	box:
-		x: 50
-		y: 23
-		width: 20
-		height: 15
-,
-	path: 'lineThree.wordOne'
-	type: 'text'
-	box:
-		x: 0
-		y: 36
-		width: 30
-		height: 15
-,
-	path: 'lineFour.wordOne'
-	type: 'text'
-	box:
-		x: 0
-		y: 49
-		width: 60
-		height: 15
-]
+formSchema =
+	page: {width: 200, height: 200}
+	words: []
+	fields: [
+		path: 'lineOne.wordOne'
+		type: 'text'
+		box:
+			x: 50
+			y: 23
+			width: 20
+			height: 15
+	,
+		path: 'lineOne.wordTwo'
+		type: 'text'
+		box:
+			x: 60
+			y: 0
+			width: 20
+			height: 15
+		validValue: '1234' 
+		fieldValidator: (fieldData) -> /^\d+$/.test fieldData
+	,
+		path: 'lineTwo.wordOne'
+		type: 'text'
+		box:
+			x: 0
+			y: 18
+			width: 40
+			height: 15
+		shouldValue: 'Hello' 
+	,
+		path: 'lineTwoNHalf.wordOne'
+		type: 'text'
+		box:
+			x: 50
+			y: 23
+			width: 20
+			height: 15
+	,
+		path: 'lineThree.wordOne'
+		type: 'text'
+		box:
+			x: 0
+			y: 36
+			width: 30
+			height: 15
+	,
+		path: 'lineFour.wordOne'
+		type: 'text'
+		box:
+			x: 0
+			y: 49
+			width: 60
+			height: 15
+	]
 
 fuzzyWords = (valid, offset) ->
 	fuzzyString = 'TZV8IdsZiCd?wYd0QxOwT.nwt8phbQs!InZ6unGrkXP'
 	words = []
-	for field, index in formSchema
+	for field, index in formSchema.fields
 		if valid and field.validValue?
 			value = field.validValue
 		else
 			value = fuzzyString.substr(index, 2 + index * 2)
-		direction = 2 * Math.PI * (index / formSchema.length)
+		direction = 2 * Math.PI * (index / formSchema.fields.length)
 		words.push
 			text: value
 			confidence: if valid then 0.9 else 0.5

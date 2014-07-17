@@ -9,7 +9,6 @@ describe 'FormReader', ->
 
 	before (done) ->
 		contentImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/m10-content.png'))
-		formSchema = new fv.FormSchema()
 		done()
 
 	it 'should read', (done) ->

@@ -4,7 +4,7 @@ unpack = require './unpack'
 #
 # This process is not location-senstive.
 module.exports.matchBarcodes = (formData, formSchema, barcodes) ->
-	barcodeFields = formSchema.filter((field) -> field.type is 'barcode')
+	barcodeFields = formSchema.fields.filter((field) -> field.type is 'barcode')
 	for barcode in barcodes
 		matches = []
 		for barcodeField in barcodeFields

@@ -6,7 +6,7 @@ dv = require 'dv'
 # Match checkboxes to form schema.
 #
 module.exports.matchCheckboxes = (formData, formSchema, checkboxes, words, schemaToPage, schemaToData) ->
-	checkboxFields = formSchema.filter((field) -> field.type is 'checkbox')
+	checkboxFields = formSchema.fields.filter((field) -> field.type is 'checkbox')
 
 	#for word in words when word.text.length < 3
 	#	logImage.drawBox word.box, 1, 255, 255, 0
