@@ -3,7 +3,7 @@ dv = require 'dv'
 # Darken very light ink to enhance readability.
 module.exports = (image) ->
 	# Transform to HSV.
-	hsv = image.toHSV()
+	hsv = image.toColor().toHSV()
 	# Select desatured (grayish) and dark pixels.
 	desaturatedMask = hsv.inRange(
 		0, 0, 0,
