@@ -1,5 +1,5 @@
 dv = require 'dv'
-{boundingBox} = require './box_math'
+{boundingBox} = require './math'
 
 # Width of the quiet zone around a barcode.
 QUIETZONE_WIDTH = 25

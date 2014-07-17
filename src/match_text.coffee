@@ -1,5 +1,5 @@
 unpack = require './unpack'
-{enclosingRectangle, boxDistance} = require './box_math'
+{boundingBox, manhattanVector, distance} = require './math'
 
 # Match text to form schema.
 #
@@ -27,7 +27,7 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 						anchors.splice index, 1
 						break
 				continue
-			
+
 			# Safeguard: Disregard matches that are too far off
 			fieldPos = schemaToPage textField.box
 			continue if Math.abs(word.box.x - fieldPos.x) + Math.abs(word.box.y - fieldPos.y) > 400
@@ -44,7 +44,7 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 			fieldData.confidence = word.confidence
 			fieldData.box = word.box
 			anchorFields.push fieldIndex
-			
+
 	# Remove all words we used as anchor.
 	for fieldIndex in anchorFields by -1
 		textFields.splice fieldIndex, 1
@@ -57,9 +57,9 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 		if closestAnchor?
 			pos.x -= closestAnchor.offset.x
 			pos.y -= closestAnchor.offset.y
-		
+
 		startWords = findTwoClosestWords pos, words
-		
+
 		# Build some variants of an enclosing box
 		boxVariants = [pos]
 		for upperLeftWord in startWords
@@ -78,7 +78,7 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 				y: upperLeftWord.box.y
 				width: pos.width * 1.1
 				height: pos.height * 1.1
-				
+
 
 		# Interpret available words using all variants and remember which would validate
 		validatingVariants = []
@@ -87,11 +87,11 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 			fieldContentCandidate = toText selectedWords
 			# Don't try the exact same value twice
 			continue if validatingVariants.some (v) -> v.value is fieldContentCandidate
-			
+
 			if not field.fieldValidator? or field.fieldValidator(fieldContentCandidate)
 				selectedArea = selectedWords[0]?.box
 				for word in selectedWords[1..]
-					selectedArea = enclosingRectangle selectedArea, word.box
+					selectedArea = boundingBox [selectedArea, word.box]
 				confidence = getConfidence selectedWords, box, grayImage
 
 				validatingVariants.push
@@ -99,7 +99,7 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 					confidence: confidence
 					box: selectedArea
 					words: selectedWords
-		
+
 		# Extremely sophisticated conflict solving algorithm
 		chosenVariant = validatingVariants[0]
 
@@ -115,12 +115,11 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 			for word in chosenVariant.words
 				words.splice words.indexOf(word), 1
 
-
 findClosestAnchor = (anchors, pos) ->
 	minDistance = Infinity
 	closest = null
 	for anchor in anchors
-		dist = boxDistance anchor.word.box, pos
+		dist = distance(manhattanVector(anchor.word.box, pos))
 		if dist < minDistance
 			minDistance = dist
 			closest = anchor
