@@ -1,5 +1,4 @@
 unpack = require './unpack'
-{boxDistance} = require './box_math'
 {estimateTransform} = require './estimate_transform'
 dv = require 'dv'
 
