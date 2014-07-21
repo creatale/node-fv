@@ -30,3 +30,10 @@ module.exports.boundingBox = (boxes) ->
 		width: maxX - minX
 		height: maxY - minY
 	}
+
+# Test if boxes A and B overlap each other.
+module.exports.isOverlapping = (boxA, boxB) ->
+	return boxA.x < (boxB.x + boxB.width) and
+		(boxA.x + boxA.width) > boxB.x and
+		boxA.y < (boxB.y + boxB.height) and
+		(boxA.y + boxA.height) > boxB.y
