@@ -42,7 +42,7 @@ class Form
 		matchCheckboxes formData, formSchema, @data[3], @data[2], schemaToPage, schemaToFields
 		
 		# Call form validators.
-		async.forEach formSchema, (field, nextField) ->
+		async.forEach formSchema.fields, (field, nextField) ->
 			if field.formValidator?
 				field.formValidator formData, nextField
 			else
