@@ -92,7 +92,7 @@ describe 'Text recognizer', ->
 	before (done) ->
 		contentImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/m10-content.png'))
 		tesseract = new dv.Tesseract 'deu'
-		tesseract.pageSegMode = 'auto_osd'
+		tesseract.pageSegMode = 'single_block'
 		tesseract.classify_enable_learning = 0
 		tesseract.classify_enable_adaptive_matcher = 0
 		done()
@@ -101,14 +101,12 @@ describe 'Text recognizer', ->
 		[words, image] = findText(contentImage, tesseract)
 		wordsToBeFound = contentWords.split(' ')
 		words.should.not.be.empty
-		# We expect our contentWords in order (but allow gaps)
-		for word in words
-			# Tolerate the instances where Tesseract emits a SINGLE LOW-9 QUOTATION MARK instead of a comma...
-			if word.text.replace('‚', ',') is wordsToBeFound[0]
-				wordsToBeFound.shift()
-
-		if wordsToBeFound.length > 0
-			done new Error('Content word(s) missing, starting at: ' + wordsToBeFound[0])
+		wordsMissing = []
+		for wordToBefound in wordsToBeFound
+			if wordToBefound in words
+				wordsMissing.push wordToBefound
+		if wordsMissing.length > 0
+			done new Error('Content word(s) missing: ' + wordToBefound)
 		else
 			done()
 
