@@ -38,7 +38,7 @@ class Form
 		matchText formData, formSchema, @data[2], schemaToPage, @images[0]
 
 		# Estimate schema to fields transform and match checkboxes.
-		schemaToFields = estimateTransform formSchema, formData, 1, 1, matchByPath
+		schemaToFields = estimateTransform formSchema.fields, formData, 1, 1, matchByPath
 		matchCheckboxes formData, formSchema, @data[3], @data[2], schemaToPage, schemaToFields
 		
 		# Call form validators.

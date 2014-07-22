@@ -30,7 +30,7 @@
   "dependencies": {
     "coffee-script": "~1.7",
     "async": "~0.7",
-    "dv": "~1.7",
+    "dv": "~1.8",
     "minimist": "~0.2.0"
   },
   "devDependencies": {
