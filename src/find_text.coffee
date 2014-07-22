@@ -1,24 +1,15 @@
 dv = require 'dv'
-{boundingBox, isOverlapping} = require './math'
+{length, distanceVector, manhattanVector, boundingBox} = require './math'
 
-isSameTextline = (boxA, boxB) ->
-	centerA = 
-		x: boxA.x + boxA.width / 2
-		y: boxA.y + boxA.height / 2
-	centerB = 
-		x: boxB.x + boxB.width / 2
-		y: boxB.y + boxB.height / 2
-	delta =
-		x: centerA.x - centerB.x
-		y: centerA.x - centerB.y
-	distance = Math.sqrt(delta.x * delta.x + delta.y * delta.y)
-	if Math.abs(delta.x) > Math.abs(delta.y)
-		# Horizontal
-		return distance < 50
-	else
-		# Vertical.
-		return distance < 2
-	
+# Compiles a mask with lines that have a certain length.
+detectLineMask = (image, minLineLength) ->
+	lineMask = new dv.Image(image.width, image.height, 8)
+	longLines = image.toGray().lineSegments(0, 0, false).filter (line) ->
+		return length(distanceVector(line.p1, line.p2)) >= minLineLength
+	for line in longLines
+		lineMask.drawLine line.p1, line.p2, 7, 'set'
+	return lineMask
+
 mergeBoxes = (boxes, predicate) ->
 	# Initialize a (region, box)-tuple set.
 	regions = (region for _, region in boxes)
@@ -49,44 +40,47 @@ mergeBoxes = (boxes, predicate) ->
 		boundingBoxes.push(boundingBox(boxes))
 	return boundingBoxes
 
-filterBoxes = (boxes, predicate) ->
-	result = []
-	# Merge adjacent regions.
-	for box, i in boxes
-		pass = true
-		for otherBox, j in boxes
-			if i isnt j and not predicate(box, otherBox)
-				pass = false
-		result.push box if pass
-	return result
+isSameTextline = (fontWidth, fontHeight) ->
+	return (boxA, boxB) ->
+		bottomA = boxA.y + boxA.height
+		bottomB = boxB.y + boxB.height
+		delta = manhattanVector boxA, boxB
+		return Math.abs(bottomA - bottomB) < fontHeight / 3 and delta.x < fontWidth * 3
 
-isOverlappingAndSmaller = (a, b) -> isOverlapping(a, b) and a.width * a.height < b.width * b.height
-
-detectCandidates = (binarizedImage) ->
-	boxes = binarizedImage.dilate(11, 1).connectedComponents(8)
-	#boxes = boxes.filter((box) -> 2 < box.width < 66 and 2 < box.height < 66)
-	#return mergeBoxes boxes, isSameTextline
-	return boxes# filterBoxes boxes, isOverlappingAndSmaller
+detectCandidates = (binarizedImage, fontWidth = 20, fontHeight = 30) ->
+	hasLetterSize = (box) ->
+		return fontWidth / 2 < box.width and fontHeight / 2 < box.height < fontHeight * 5
+	# Smear text a bit to extract letter boxes.
+	smearWidth = (0.5 * fontWidth) + fontWidth % 2
+	smearHeight = (0.5 * fontHeight) + fontHeight % 2
+	boxes = binarizedImage.dilate(smearWidth, smearHeight).connectedComponents(8).filter(hasLetterSize)
+	# Merge letters to text lines
+	boxes = mergeBoxes(boxes, isSameTextline(fontWidth, fontHeight))
+	return boxes
 
 # Use given *Tesseract* instance to find all text grouped as words along with
 # confidence and boxes.
 module.exports.findText = (image, tesseract) ->
 	words = []
 	clearedImage = new dv.Image image
-	tesseract.image = image
-	binarizedImage = tesseract.thresholdImage()
-	logImage = new dv.Image image.width, image.height, 32
-	logImage.drawImage binarizedImage.toColor(), {x: 0, y: 0, width: binarizedImage.width, height: binarizedImage.height}
-	#	for candidate in tesseract.findTextLines(false) #detectCandidates binarizedImage
-	
-	for candidate in detectCandidates binarizedImage
-		tesseract.image = binarizedImage.crop candidate
-		words = words.concat(tesseract.findWords())
-		logImage.drawBox candidate, 2, 255, 0, 0
-
-	fs = require 'fs'
-	fs.writeFileSync 'bla.png', logImage.toBuffer 'png'
-	#console.log words.map((word) -> word.text)
+	# Remove long lines.
+	lineMask = detectLineMask image, 45
+	textImage = image.toColor().add lineMask.toColor()
+	# Extract text lines.
+	tesseract.image = textImage
+	candidates = detectCandidates tesseract.thresholdImage()
+	for candidate in candidates
+		# Crop and recognize.
+		tesseract.image = textImage.crop candidate
+		localWords = tesseract.findWords()
+		for word in localWords
+			# Transform back.
+			word.box.x += candidate.x
+			word.box.y += candidate.y
+			# Store candidate.
+			word.candidate = candidate
+		words = words.concat(localWords)
+	# Remove words with more than letters.
 	for word in words when word.text.length >= 3
 		clearedImage.clearBox word.box
 	return [words, clearedImage]

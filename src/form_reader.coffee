@@ -69,7 +69,9 @@ class Form
 
 		for data, index in @data[1..] when data?
 			for boxed in data
-				resultImage.drawBox(imageOffset(boxed.box, index), 2, 0, 0, 255, 0.5)
+				try 
+					resultImage.drawBox(imageOffset(boxed.box, index), 2, 0, 0, 255, 0.5)
+					resultImage.drawBox(imageOffset(boxed.candidate, index), 2, 255, 0, 0)
 
 		return resultImage
 
@@ -83,11 +85,9 @@ class Form
 module.exports = class FormReader
 	constructor: (language = 'eng', @image = null) ->
 		@tesseract = new dv.Tesseract language
-		@tesseract.pageSegMode = 'auto_osd'
+		@tesseract.pageSegMode = 'single_block'
 		@tesseract.classify_enable_learning = 0
 		@tesseract.classify_enable_adaptive_matcher = 0
-		#@tesseract.tessedit_char_whitelist = 'ÄÖÜABCDEFGHIJKLMNOPQRSTUVWXYZäöüabcdefghijklmnopqrstuvwxyz+-.,;:§[]'
-		#@tesseract.tessedit_consistent_reps = false
 		@zxing = new dv.ZXing()
 
 	find: =>
