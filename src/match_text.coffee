@@ -1,5 +1,5 @@
 unpack = require './unpack'
-{boundingBox, manhattanVector, distance} = require './math'
+{boundingBox, manhattanVector, length} = require './math'
 
 # Match text to form schema.
 #
@@ -119,7 +119,7 @@ findClosestAnchor = (anchors, pos) ->
 	minDistance = Infinity
 	closest = null
 	for anchor in anchors
-		dist = distance(manhattanVector(anchor.word.box, pos))
+		dist = length(manhattanVector(anchor.word.box, pos))
 		if dist < minDistance
 			minDistance = dist
 			closest = anchor
