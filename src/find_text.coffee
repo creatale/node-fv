@@ -45,7 +45,7 @@ isSameTextline = (fontWidth, fontHeight) ->
 		bottomA = boxA.y + boxA.height
 		bottomB = boxB.y + boxB.height
 		delta = manhattanVector boxA, boxB
-		return Math.abs(bottomA - bottomB) < fontHeight / 3 and delta.x < fontWidth * 3
+		return Math.abs(bottomA - bottomB) < fontHeight / 2 and delta.x < fontWidth * 3
 
 detectCandidates = (binarizedImage, fontWidth = 20, fontHeight = 30) ->
 	hasLetterSize = (box) ->
