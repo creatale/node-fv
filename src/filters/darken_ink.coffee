@@ -15,7 +15,7 @@ module.exports = (image) ->
 	h = hsv.toGray(1, 0, 0)
 	s = hsv.toGray(0, 1, 0)
 	v = hsv.toGray(0, 0, 1)
-	vOrig = new dv.Image v
+	vOrig = new dv.Image(v)
 	# Compute "fuzzy value protection mask" and apply linear spline.
 	curve = [0..255]
 	for x in [0..199]
