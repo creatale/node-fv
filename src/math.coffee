@@ -1,8 +1,15 @@
-# Compute distance from vector.
-module.exports.distance = (vector) ->
+# Compute length of a vector.
+module.exports.length = (vector) ->
 	return Math.sqrt(vector.x * vector.x + vector.y * vector.y)
 
-# Compute manhattan vector between boxes.
+# Computes the euclidean distance vector between two vectors.
+module.exports.distanceVector = (vectorA, vectorB) ->
+	return {
+		x: vectorA.x - vectorB.x
+		y: vectorA.y - vectorB.y
+	}
+
+# Compute manhattan vector between two boxes.
 module.exports.manhattanVector = (boxA, boxB) ->
 	return {
 		x: Math.max(boxA.x, boxB.x) - Math.min(boxA.x + boxA.width, boxB.x + boxB.width)
