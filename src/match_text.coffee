@@ -2,8 +2,6 @@ unpack = require './unpack'
 {boundingBox, manhattanVector, length} = require './math'
 
 # Match text to form schema.
-#
-# Assumes words are put in reading order by Tesseract.
 module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage) ->
 	grayImage = rawImage.toGray()
 	textFields = formSchema.fields.filter((field) -> field.type is 'text')
@@ -155,23 +153,28 @@ selectWords = (words, placement) ->
 	#console.log 'Chosen as first line:', firstLine
 	return (word for word in selectedWords when firstLine - 10 <= word.box.y < firstLine + placement.height - 5)
 
-# Convert series of rectangles to text. Assumes *words* is already ordered in reading direction.
+# Convert words in random order to a single block of text.
 toText = (words) ->
-	return '' unless words.length
-	lastY = words[0].box.y
-	lastWord = ''
-	result = ''
-	for word in words
-		if word.box.y > lastY + 20
-			result += '\n'
-			# Tesseract tends to split words into sequences of single characters
-		else unless lastWord is '' or (lastWord.length is 1 and word.text.length is 1)
-			result += ' '
-		result += word.text
-		lastWord = word.text
-		lastY = word.box.y
+	return '' if words.length is 0
 
-	return result
+	# Extract lines from Y difference peaks.
+	lines = [[]]
+	lastWord = words[0]
+	words.sort((a, b) -> a.box.y - b.box.y)
+	for word in words
+		if Math.abs(lastWord.box.y - word.box.y) > 15
+			lines.push []
+		lines[lines.length - 1].push word
+		lastWord = word
+
+	# Put lines in reading order and join them.
+	text = ''
+	for line, i in lines
+		text += '\n' unless i is 0
+		line.sort((a, b) -> a.box.x - b.box.x)
+		text += line.map((word) -> word.text).join(' ')
+
+	return text
 
 getConfidence = (words, placement, grayImage) ->
 	if words?.length > 0
