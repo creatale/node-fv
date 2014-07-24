@@ -16,6 +16,13 @@ module.exports.manhattanVector = (boxA, boxB) ->
 		y: Math.max(boxA.y, boxB.y) - Math.min(boxA.y + boxA.height, boxB.y + boxB.height)
 	}
 
+# Test if boxes A and B overlap each other.
+module.exports.intersectBox = (boxA, boxB) ->
+	return boxA.x <= (boxB.x + boxB.width) and
+		boxB.x <= (boxA.x + boxA.width) and
+		boxA.y <= (boxB.y + boxB.height) and
+		boxB.y <= (boxA.y + boxA.height)
+
 # Compute bounding box of a set of boxes. Boxes may be undefined, but at least one must be defined.
 module.exports.boundingBox = (boxes) ->
 	minX = Number.MAX_VALUE

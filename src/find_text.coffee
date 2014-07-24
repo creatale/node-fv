@@ -1,5 +1,5 @@
 dv = require 'dv'
-{length, distanceVector, manhattanVector, boundingBox} = require './math'
+{length, distanceVector, manhattanVector, intersectBox, boundingBox} = require './math'
 
 # Compiles a mask with lines that have a certain length.
 detectLineMask = (image, minLineLength) ->
@@ -40,12 +40,13 @@ mergeBoxes = (boxes, predicate) ->
 		boundingBoxes.push(boundingBox(boxes))
 	return boundingBoxes
 
-isSameTextline = (fontWidth, fontHeight) ->
+isSameBlock = (fontWidth, fontHeight) ->
 	return (boxA, boxB) ->
 		bottomA = boxA.y + boxA.height
 		bottomB = boxB.y + boxB.height
 		delta = manhattanVector boxA, boxB
-		return Math.abs(bottomA - bottomB) < fontHeight / 2 and delta.x < fontWidth * 3
+		sameLine = Math.abs(bottomA - bottomB) < fontHeight / 2 and delta.x < fontWidth * 3
+		return sameLine or intersectBox(boxA, boxB)
 
 detectCandidates = (binarizedImage, fontWidth = 20, fontHeight = 30) ->
 	hasLetterSize = (box) ->
@@ -54,8 +55,8 @@ detectCandidates = (binarizedImage, fontWidth = 20, fontHeight = 30) ->
 	smearWidth = (0.5 * fontWidth) + fontWidth % 2
 	smearHeight = (0.5 * fontHeight) + fontHeight % 2
 	boxes = binarizedImage.dilate(smearWidth, smearHeight).connectedComponents(8).filter(hasLetterSize)
-	# Merge letters to text lines
-	boxes = mergeBoxes(boxes, isSameTextline(fontWidth, fontHeight))
+	# Merge letters to text blocks.
+	boxes = mergeBoxes(boxes, isSameBlock(fontWidth, fontHeight))
 	return boxes
 
 # Use given *Tesseract* instance to find all text grouped as words along with
