@@ -169,10 +169,19 @@ toText = (words) ->
 
 	# Put lines in reading order and join them.
 	text = ''
+	# Make an attempt to repair words splitted into characters, e.g. 'J 1 2/ 34 5'.
+	fragment = /^(|\w|\d\d)\/?$/
 	for line, i in lines
 		text += '\n' unless i is 0
 		line.sort((a, b) -> a.box.x - b.box.x)
-		text += line.map((word) -> word.text).join(' ')
+		lastFragmentRight = 0
+		for word, i in line
+			isFragment = fragment.test word.text
+			if (i is 0) or (isFragment and word.box.x - lastFragmentRight < 50)
+				text += word.text
+			else
+				text += ' ' + word.text
+			lastFragmentRight = word.box.x + word.box.width if isFragment
 
 	return text
 
