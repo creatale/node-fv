@@ -31,6 +31,7 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 			continue if Math.abs(word.box.x - fieldPos.x) + Math.abs(word.box.y - fieldPos.y) > 400
 			#console.log 'Unique match:', textField, word
 			anchor =
+				acceptedBy: textField.path
 				offset:
 					x: fieldPos.x - word.box.x
 					y: fieldPos.y - word.box.y
@@ -42,6 +43,8 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 			fieldData.confidence = word.confidence
 			fieldData.box = word.box
 			anchorFields.push fieldIndex
+			
+	#console.log 'Anchors: ', anchors
 
 	# Remove all words we used as anchor.
 	for fieldIndex in anchorFields by -1
@@ -57,6 +60,8 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 			pos.y -= closestAnchor.offset.y
 
 		startWords = findTwoClosestWords pos, words
+		
+		#console.log field.path, 'uses anchor', closestAnchor?.acceptedBy
 
 		# Build some variants of an enclosing box
 		boxVariants = [pos]
