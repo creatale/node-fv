@@ -23,6 +23,7 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 				for anchor, index in anchors
 					if anchor.word is word
 						anchors.splice index, 1
+						anchorFields.splice index, 1
 						break
 				continue
 
