@@ -16,6 +16,7 @@ module.exports.matchCheckboxes = (formData, formSchema, checkboxes, words, schem
 		dataPos = schemaToData field.box
 		#logImage.drawBox dataPos, 2, 255, 0, 0
 		closeWord = findClosestShortWord words, dataPos, dataPos.width
+		closeWord ?= findClosestShortWord words, schemaToPage(field.box), dataPos.width
 		#logImage.drawBox closeWord.box, 3, 0, 255, 0 if closeWord?
 		fieldData = unpack formData, field.path
 
