@@ -204,7 +204,8 @@ getConfidence = (words, placement, grayImage) ->
 			return 0
 		cropped = grayImage.crop placement.x - 5, placement.y - 5,
 				placement.width + 10, placement.height + 10
-		blobs = (component for component in cropped.dilate(3, 5).connectedComponents(8) when component.width > 8 and component.height > 14)
+		processed = cropped.dilate(3, 5).threshold(220)
+		blobs = (component for component in processed.connectedComponents(8) when component.width > 8 and component.height > 14)
 		if blobs.length is 0
 			return 99
 		else if blobs.length is 1
