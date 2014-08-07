@@ -50,10 +50,10 @@ isSameBlock = (fontWidth, fontHeight) ->
 
 detectCandidates = (binarizedImage, fontWidth = 20, fontHeight = 30) ->
 	hasLetterSize = (box) ->
-		return fontWidth / 2 < box.width and fontHeight / 2 < box.height < fontHeight * 5
+		return fontWidth / 2 < box.width and fontHeight / 2 < box.height < fontHeight * 6
 	# Smear text a bit to extract letter boxes.
-	smearWidth = (0.5 * fontWidth) + fontWidth % 2
-	smearHeight = (0.5 * fontHeight) + fontHeight % 2
+	smearWidth = (1 * fontWidth) + fontWidth % 2
+	smearHeight = (0.25 * fontHeight) + fontHeight % 2
 	boxes = binarizedImage.dilate(smearWidth, smearHeight).connectedComponents(8).filter(hasLetterSize)
 	# Merge letters to text blocks.
 	boxes = mergeBoxes(boxes, isSameBlock(fontWidth, fontHeight))
