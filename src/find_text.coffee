@@ -75,6 +75,7 @@ module.exports.findText = (image, tesseract) ->
 	for candidate in candidates
 		# Crop and recognize.
 		tesseract.image = textImage.crop candidate
+		tesseract.pageSegMode = if candidate.height < 60 then 'single_line' else 'single_block'
 		localWords = tesseract.findWords()
 		for word in localWords
 			# Transform back.
