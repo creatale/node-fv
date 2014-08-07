@@ -123,7 +123,7 @@ findClosestAnchor = (anchors, pos) ->
 	minDistance = Infinity
 	closest = null
 	for anchor in anchors
-		dist = length(manhattanVector(anchor.word.box, pos))
+		dist = Math.abs(anchor.word.box.x - pos.x) + Math.abs(anchor.word.box.y - pos.y)
 		if dist < minDistance
 			minDistance = dist
 			closest = anchor
