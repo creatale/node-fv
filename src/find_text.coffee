@@ -56,7 +56,9 @@ detectCandidates = (binarizedImage, fontWidth = 20, fontHeight = 30) ->
 	smearHeight = (0.25 * fontHeight) + fontHeight % 2
 	boxes = binarizedImage.dilate(smearWidth, smearHeight).connectedComponents(8).filter(hasLetterSize)
 	# Merge letters to text blocks.
-	boxes = mergeBoxes(boxes, isSameBlock(fontWidth, fontHeight))
+	regions = mergeBoxes boxes, isSameBlock(fontWidth, fontHeight)
+	# Merge regions again with simple overlapping test; Tesseract may read content twice otherwise.
+	boxes = mergeBoxes regions, intersectBox
 	return boxes
 
 # Use given *Tesseract* instance to find all text grouped as words along with
@@ -81,7 +83,7 @@ module.exports.findText = (image, tesseract) ->
 			# Store candidate.
 			word.candidate = candidate
 		words = words.concat(localWords)
-	# Remove words with more than letters.
+	# Remove words with more than three letters.
 	for word in words when word.text.length >= 3
 		clearedImage.clearBox word.box
 	return [words, clearedImage]
