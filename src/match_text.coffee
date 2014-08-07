@@ -166,9 +166,9 @@ toText = (words) ->
 	# Extract lines from Y difference peaks.
 	lines = [[]]
 	lastWord = words[0]
-	words.sort((a, b) -> a.box.y - b.box.y)
+	words.sort((a, b) -> a.box.y + a.box.height - b.box.y - b.box.height)
 	for word in words
-		if Math.abs(lastWord.box.y - word.box.y) > 15
+		if Math.abs(lastWord.box.y + lastWord.box.height - word.box.y - word.box.height) > 15
 			lines.push []
 		lines[lines.length - 1].push word
 		lastWord = word
