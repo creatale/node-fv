@@ -88,7 +88,7 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 		validatingVariants = []
 		for box in boxVariants
 			selectedWords = selectWords words, box
-			fieldContentCandidate = toText selectedWords
+			fieldContentCandidate = toText selectedWords, field.extendedGapDetection
 			# Don't try the exact same value twice
 			continue if validatingVariants.some (v) -> v.value is fieldContentCandidate
 
@@ -159,8 +159,14 @@ selectWords = (words, placement) ->
 	#console.log 'Chosen as first line:', firstLine
 	return (word for word in selectedWords when firstLine - 10 <= word.box.y < firstLine + placement.height - 5)
 
+estimateCharWidth = (word) ->
+	charWidth = word.box.width / word.text.length
+	# Compensate for padding of outermost characters
+	charWidth += 0.2*charWidth / word.text.length
+	return charWidth
+	
 # Convert words in random order to a single block of text.
-toText = (words) ->
+toText = (words, extendedGapDetection = false) ->
 	return '' if words.length is 0
 
 	# Extract lines from Y difference peaks.
@@ -180,14 +186,24 @@ toText = (words) ->
 	for line, i in lines
 		text += '\n' unless i is 0
 		line.sort((a, b) -> a.box.x - b.box.x)
-		lastFragmentRight = 0
+		gap = 0
+		minimumGap = 50
+		lastWord = null
 		for word, i in line
 			isFragment = fragment.test word.text
-			if (i is 0) or (isFragment and word.box.x - lastFragmentRight < 50)
+			if lastWord?
+				charWidth = (estimateCharWidth(lastWord) + estimateCharWidth(word)) / 2
+				gap = word.box.x - (lastWord.box.x + lastWord.box.width)
+				minimumGap = charWidth * 1.5 if extendedGapDetection
+			if (i is 0) or (isFragment and fragment.test(lastWord.text) and gap < minimumGap)
 				text += word.text
+			else if extendedGapDetection and gap > charWidth * 2
+				# Insert up to three spaces depending on gap
+				spaces = Math.max 1, Math.floor(gap / charWidth)
+				text += '   '[...spaces] + word.text
 			else
 				text += ' ' + word.text
-			lastFragmentRight = word.box.x + word.box.width if isFragment
+			lastWord = word
 
 	return text
 
