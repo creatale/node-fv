@@ -1,6 +1,6 @@
 {
   "name": "fv",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "FormVision is a node.js library for extracting data from scanned forms",
   "keywords": [
     "graphics",
