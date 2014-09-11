@@ -97,7 +97,7 @@ describe 'Text recognizer', ->
 		tesseract.classify_enable_adaptive_matcher = 0
 		done()
 
-	it 'should find text (clean)', (done) ->
+	it 'should find text in real image', (done) ->
 		[words, image] = findText(contentImage, tesseract)
 		wordsToBeFound = contentWords.split(' ')
 		words.should.not.be.empty

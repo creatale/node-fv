@@ -45,7 +45,4 @@ module.exports.findBarcodes = (image, zxing) ->
 				code.box.y += candidate.y - QUIETZONE_WIDTH
 				delete code.points
 				codes.push code
-		catch exception
-			if exception.message.indexOf('Too little dynamic range') isnt 0
-				console.error exception
 	return [codes, clearedImage]
