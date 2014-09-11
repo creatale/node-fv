@@ -36,8 +36,7 @@
   },
   "devDependencies": {
     "chai": "^1.9.1",
-    "coffee-coverage": "^0.4.2",
-    "open": "^0.0.5"
+    "coffee-coverage": "^0.4.2"
   },
   "license": "MIT"
 }

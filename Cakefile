@@ -28,7 +28,4 @@ task 'test-cov', 'Run tests, generating a coverage report', ->
 	mocha = spawn mocha, ['--require', './test/mocha.coverage.js', '--reporter', 'html-cov'],
 		{cwd: '.', stdio: ['ignore', stream, process.stderr]}
 	mocha.on 'exit', (status) ->
-		try
-			open = require 'open'
-			open(path.join(__dirname, filename), 'chrome')
 		return process.exit(status)
