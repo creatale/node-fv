@@ -2,7 +2,7 @@ global.should = require('chai').should()
 dv = require 'dv'
 fs = require 'fs'
 
-fv = require '../lib/fv'
+FormReader = require '../src/form_reader'
 
 describe 'FormReader', ->
 	contentImage = null
