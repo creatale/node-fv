@@ -12,8 +12,10 @@ module.exports.matchBarcodes = (formData, formSchema, barcodes) ->
 				matches.push barcodeField 
 		for match in matches
 			fieldData = unpack(formData, match.path)
-			confidence = Math.round(99 / matches.length)
+			confidence = Math.round(100 / matches.length)
 			if not (confidence < fieldData.confidence)
-				fieldData.value = barcode
+				fieldData.value = 
+					data: barcode.data
+					buffer: barcode.buffer
 				fieldData.confidence = confidence
-				#fieldData.box = boundingBox(barcode.points) fixme
+				fieldData.box = barcode.box
