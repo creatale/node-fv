@@ -14,33 +14,28 @@ writeImage = (filename, image) ->
 
 describe 'Filters', ->
 	printedImage = null
-	lowInkImage = null
+	inkImage = null
 	skewedImage = null
 	
-	before (done) ->
+	before ->
 		printedImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/m10-printed.png'))
-		lowInkImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/low-ink.png'))
-		skewedImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/skewed.png'))
-		done()
+		inkImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/filter-ink.png'))
+		skewedImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/filter-skewed.png'))
+		
+	it 'should binarize', ->
+		writeImage('M10-binarize.png', binarize(printedImage))
+		
+	it 'should darkenInk', ->
+		writeImage('M10-darkenInk.png', darkenInk(printedImage))
+		writeImage('ink-darkenInk.png', darkenInk(inkImage))
+		
+	it 'should deskew', ->
+		writeImage('skewed-deskew.png', deskew(skewedImage))
+		writeImage('ink-deskew.png', deskew(inkImage))
+		
+	it 'should filterBackground', ->
+		writeImage('M10-filterBackground.png', filterBackground(printedImage, 13, 19))
 
-	it 'should binarize', (done) ->
-		writeImage 'M10-binarize.png', binarize printedImage
-		done()
-
-	it 'should darkenInk', (done) ->
-		writeImage 'M10-darkenInk.png', darkenInk printedImage
-		writeImage 'low-toner-darkenInk.png', darkenInk lowInkImage
-		done()
-
-	it 'should deskew', (done) ->
-		writeImage 'skewed-deskew.png', deskew skewedImage
-		writeImage 'low-toner-deskew.png', deskew lowInkImage
-		done()
-
-	it 'should filterBackground', (done) ->
-		writeImage 'M10-filterBackground.png', filterBackground printedImage, 13, 19
-		done()
-
-	it 'should removeRed', (done) ->
-		writeImage 'M10-removeRed.png', removeRed printedImage
-		done()
+	it 'should removeRed', ->
+		writeImage('M10-removeRed.png', removeRed(printedImage))
+		

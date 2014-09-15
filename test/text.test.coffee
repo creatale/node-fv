@@ -81,63 +81,73 @@ fuzzyWords = (valid, offset) ->
 	return words
 
 describe 'Text recognizer', ->
-	contentImage = null
-	tesseract = null
-	tesseractSparse = null
 	mockSchemaToPage = ({x, y, width, height}) -> {x, y, width, height}
-	contentWords = 'LeeTK 00047 Musterfrau Maria 11.05.42 Teststr. 1 D 99210 Prüfdorf 12/13 8001337 X123456789 '
-	contentWords += '5000 1 123456700 101234567 02.09.13 Hypertonie(primäre) Struma nodosa BZ, HbA1, Krea, K+, '
-	contentWords += 'TSH, Chol, HDL, LDL, HS'
-	
-	before (done) ->
+	contentImage = null
+
+	before ->
 		contentImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/m10-content.png'))
-		tesseract = new dv.Tesseract 'deu'
-		tesseract.pageSegMode = 'single_block'
-		tesseract.classify_enable_learning = 0
-		tesseract.classify_enable_adaptive_matcher = 0
-		done()
 
-	it 'should find text in real image', (done) ->
-		[words, image] = findText(contentImage, tesseract)
-		wordsToBeFound = contentWords.split(' ')
-		words.should.not.be.empty
-		wordsMissing = []
-		for wordToBefound in wordsToBeFound
-			if wordToBefound in words
-				wordsMissing.push wordToBefound
-		if wordsMissing.length > 0
-			done new Error('Content word(s) missing: ' + wordToBefound)
-		else
-			done()
+	describe 'should find text in', ->
+		tesseract = null
+		shouldFindText = (language, image, expectedText) ->
+			image = 
+			[words, image] = findText(image, tesseract)
+			words.should.not.be.empty
+			wordsMissing = expectedText.split(' ').filter((word) -> word in words)
+			if wordsMissing.length > 0
+				throw new Error('Content word(s) missing: ' + wordsMissing)
 
-	it 'should match valid text', (done) ->
+		before ->
+			tesseract = new dv.Tesseract 'deu'
+			tesseract.pageSegMode = 'single_block'
+			tesseract.classify_enable_learning = 0
+			tesseract.classify_enable_adaptive_matcher = 0
+
+		it 'synthetic image at 45% black', ->
+			shouldFindText 'eng', new dv.Image('png', fs.readFileSync(__dirname + '/data/text-045.png')),
+				'I am 3 LOW contrast text I am a high I am a low contrast text '
+				'I am a low contrast text contrast text I am a low contrast text'
+
+		it 'synthetic image at 30% black', ->
+			shouldFindText 'eng', new dv.Image('png', fs.readFileSync(__dirname + '/data/text-030.png')),
+				'I am 3 LOW contrast text I am a high I am a low contrast text '
+				'I am a low contrast text contrast text I am a low contrast text'
+
+		it 'synthetic image at 5% black', ->
+			shouldFindText 'eng', new dv.Image('png', fs.readFileSync(__dirname + '/data/text-005.png')),
+				'I am 3 LOW contrast text I am a high I am a low contrast text '
+				'I am a low contrast text contrast text I am a low contrast text'
+
+		it 'real image', ->
+			shouldFindText 'deu', contentImage,
+				'LeeTK 00047 Musterfrau Maria 11.05.42 Teststr. 1 D 99210 Prüfdorf 12/13 8001337 X123456789 ' +
+				'5000 1 123456700 101234567 02.09.13 Hypertonie(primäre) Struma nodosa BZ, HbA1, Krea, K+, ' +
+				'TSH, Chol, HDL, LDL, HS'
+
+	it 'should match valid text', ->
 		formData = {}
 		matchText formData, formSchema, fuzzyWords(true, 0), mockSchemaToPage, contentImage
 		formData.should.not.be.empty
-		done()
-
-	it 'should match valid and fuzzed (5) text', (done) ->
+		
+	it 'should match valid and fuzzed (5) text', ->
 		formData = {}
 		matchText formData, formSchema, fuzzyWords(true, 5), mockSchemaToPage, contentImage
 		formData.should.not.be.empty
-		done()
 		
-	it 'should match valid and fuzzed (15) text', (done) ->
+	it 'should match valid and fuzzed (15) text', ->
 		formData = {}
 		matchText formData, formSchema, fuzzyWords(true, 15), mockSchemaToPage, contentImage
 		formData.should.not.be.empty
-		done()
-	
-	it 'should match valid and fuzzed (20) text', (done) ->
+		
+	it 'should match valid and fuzzed (20) text', ->
 		formData = {}
 		matchText formData, formSchema, fuzzyWords(true, 20), mockSchemaToPage, contentImage
 		formData.should.not.be.empty
 		should.exist formData.lineOne.wordTwo.value
 		formData.lineOne.wordTwo.value.should.equal '1234'
-		done()
-
-	it 'should partially match invalid and fuzzed text', (done) ->
+		
+	it 'should partially match invalid and fuzzed text', ->
 		formData = {}
 		matchText formData, formSchema, fuzzyWords(true, 5), mockSchemaToPage, contentImage
 		formData.should.not.be.empty
-		done()
+		

@@ -41,47 +41,41 @@ createBarcodes = (a, b) -> [
 ]
 
 describe 'Barcode recognizer', ->
-	barcodesImage = null
-	printedImage = null
-	zxing = null
+	describe 'should find barcodes in', ->
+		zxing = null
 	
-	before (done) ->
-		barcodesImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/barcodes.png'))
-		printedImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/m10-printed.png'))
-		zxing = new dv.ZXing()
-		done()
+		before ->
+			zxing = new dv.ZXing()
 
-	it 'should find barcodes in synthetic image', (done) ->
-		[barcodes, imageOut] = findBarcodes barcodesImage, zxing
-		barcodes.should.have.length 4
-		imageOut.should.not.equal barcodesImage
-		done()
+		it 'synthetic image', ->
+			barcodesImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/barcodes.png'))
+			[barcodes, imageOut] = findBarcodes barcodesImage, zxing
+			barcodes.should.have.length 4
+			imageOut.should.not.equal barcodesImage
 
-	it 'should find barcodes in real image', (done) ->
-		[barcodes, imageOut] = findBarcodes printedImage, zxing
-		barcodes.should.have.length 3
-		imageOut.should.not.equal printedImage
-		done()
-
-	it 'should match 1 barcode to "one" and drop others', (done) ->
+		it 'printed image', ->
+			printedImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/m10-printed.png'))
+			[barcodes, imageOut] = findBarcodes printedImage, zxing
+			barcodes.should.have.length 3
+			imageOut.should.not.equal printedImage
+			
+	it 'should match 1 barcode to "one" and drop others', ->
 		formData = {}
 		barcodes = createBarcodes 'ITF', 'DATA_MATRIX'
 		matchBarcodes(formData, createFormSchema('ITF', 'PDF_417'), barcodes)
 		formData.one.confidence.should.equal 100
 		formData.one.value.data.should.equal barcodes[0].data
 		formData.one.box.should.equal barcodes[0].box
-		done()
 
-	it 'should match 2 barcodes to "one" with low confidence', (done) ->
+	it 'should match 2 barcodes to "one" with low confidence', ->
 		formData = {}
 		barcodes = createBarcodes 'ITF', 'ITF'
 		matchBarcodes(formData, createFormSchema('ITF', 'PDF_417'), barcodes)
 		formData.one.confidence.should.equal 50
 		formData.one.value.data.should.equal(barcodes[0].data).or.equal(barcodes[1].data)
 		formData.one.box.should.equal(barcodes[0].box).or.equal(barcodes[1].box)
-		done()
 
-	it 'should match 1 barcode to "one" and "two" with low confidence', (done) ->
+	it 'should match 1 barcode to "one" and "two" with low confidence', ->
 		formData = {}
 		barcodes = createBarcodes 'ITF', 'DATA_MATRIX'
 		matchBarcodes(formData, createFormSchema('ITF', 'ITF'), barcodes)
@@ -91,9 +85,8 @@ describe 'Barcode recognizer', ->
 		formData.two.confidence.should.equal 50
 		formData.two.value.data.should.equal(barcodes[0].data)
 		formData.two.box.should.equal(barcodes[0].box)
-		done()
 
-	it 'should match 2 barcodes to "one" and "two" and with low confidence', (done) ->
+	it 'should match 2 barcodes to "one" and "two" and with low confidence', ->
 		formData = {}
 		barcodes = createBarcodes 'ITF', 'DATA_MATRIX'
 		matchBarcodes(formData, createFormSchema('ITF', 'ITF'), barcodes)
@@ -104,9 +97,8 @@ describe 'Barcode recognizer', ->
 		b = formData.one.value.data is barcodes[1].data and formData.two.value.data is barcodes[0].data and
 			formData.one.box is barcodes[1].box and formData.two.box is barcodes[0].box
 		(a or b).should.be.true
-		done()
-
-	it 'should match 1 barcode to "one" and 1 barcode to "two"', (done) ->
+		
+	it 'should match 1 barcode to "one" and 1 barcode to "two"', ->
 		formData = {}
 		barcodes = createBarcodes 'ITF', 'DATA_MATRIX'
 		matchBarcodes(formData, createFormSchema('ITF', 'DATA_MATRIX'), barcodes)
@@ -116,4 +108,4 @@ describe 'Barcode recognizer', ->
 		formData.two.confidence.should.equal 100
 		formData.two.value.data.should.equal(barcodes[1].data)
 		formData.two.box.should.equal(barcodes[1].box)
-		done()
+		
