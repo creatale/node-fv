@@ -15,7 +15,10 @@ createFormSchema = (a, b) ->
 			width: 10
 			height: 20
 		fieldValidator: (value) -> if not a? then true else value is a
-		fieldSelector: (choices) -> choices[0]
+		fieldSelector: (choices) ->
+			choice = choices[0]
+			choice.foobar = true
+			return choices
 	,
 		path: 'two'
 		type: 'checkbox'
@@ -25,7 +28,6 @@ createFormSchema = (a, b) ->
 			width: 10
 			height: 20
 		fieldValidator: if not b? then null else (value) -> value is b
-		fieldSelector: null
 	]
 
 schemaToPage = ({x, y, width, height}) -> {x, y, width, height}
@@ -167,3 +169,5 @@ describe 'Checkbox recognizer', ->
 			formData.two.confidence.should.be.within 30, 70
 			formData.two.value.be.false
 			formData.two.box.should.equal formSchema.fields[1].box
+
+		#XXX: define this, once fieldSelection semantics are ready.

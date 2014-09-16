@@ -18,7 +18,10 @@ createFormSchema = (a, b, c) ->
 			width: 200
 			height: 50
 		fieldValidator: (value) -> if not a? then true else value is a
-		fieldSelector: (choices) -> choices[0]
+		fieldSelector: (choices) ->
+			choice = choices[0]
+			choice.foobar = true
+			return choices
 	,
 		path: 'two'
 		type: 'text'
@@ -28,7 +31,6 @@ createFormSchema = (a, b, c) ->
 			width: 100
 			height: 50
 		fieldValidator: if not b? then null else (value) -> value is b
-		fieldSelector: null
 	,
 		path: 'three'
 		type: 'text'
@@ -38,7 +40,6 @@ createFormSchema = (a, b, c) ->
 			width: 100
 			height: 50
 		fieldValidator: if not c? then null else (value) -> value is c
-		fieldSelector: null
 	]
 
 createWords = (text) ->
