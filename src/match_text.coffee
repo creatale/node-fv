@@ -45,7 +45,7 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 			fieldData.box = word.box
 			anchorFields.push fieldIndex
 			
-	#console.log 'Anchors: ', anchors
+	# console.log 'Anchors: ', anchors
 
 	# Remove all words we used as anchor.
 	for fieldIndex in anchorFields by -1
@@ -118,6 +118,8 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 			fieldData.box = chosenVariant.box
 			for word in chosenVariant.words
 				words.splice words.indexOf(word), 1
+
+	return {anchors}
 
 findClosestAnchor = (anchors, pos) ->
 	minDistance = Infinity

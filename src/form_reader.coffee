@@ -35,8 +35,8 @@ class Form
 			schemaToPage = estimateTransform formSchema.words, @data[2], fallbackScale
 
 		# Match text and verify cleanliness of empty text fields.
-		matchText formData, formSchema, @data[2], schemaToPage, @images[0]
-
+		{anchors} = matchText formData, formSchema, @data[2], schemaToPage, @images[0]
+		@anchors = anchors
 		# Estimate schema to fields transform and match checkboxes.
 		schemaToFields = estimateTransform formSchema.fields, formData, 1, 1, matchByPath
 		matchCheckboxes formData, formSchema, @data[3], @data[2], schemaToPage, schemaToFields
@@ -66,12 +66,20 @@ class Form
 		imageBox = {x: 0, y: 0, width: @images[0].width, height: @images[0].height}
 		for image, index in @images when image?
 			resultImage.drawImage(image.toColor(), imageOffset(imageBox, index))
-
 		for data, index in @data[1..] when data?
 			for boxed in data
 				try 
 					resultImage.drawBox(imageOffset(boxed.box, index), 2, 0, 0, 255, 0.5)
 					resultImage.drawBox(imageOffset(boxed.candidate, index), 2, 255, 0, 0)
+
+		for anchor, index in @anchors
+			box =
+				x: anchor.word.box.x + anchor.offset.x
+				y: anchor.word.box.y + anchor.offset.y
+				width: anchor.word.box.width
+				height: anchor.word.box.height
+			resultImage.drawBox(imageOffset(box, 1), 4, 0, 255, 50, 0.5)
+			resultImage.drawLine(imageOffset(box, 1), imageOffset(anchor.word.box, 1), 4, 0, 255, 255, 0.5)
 
 		return resultImage
 
