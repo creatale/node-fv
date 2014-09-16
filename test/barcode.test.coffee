@@ -35,6 +35,7 @@ createFormSchema = (a, b) ->
 createBarcodes = (a, b) -> [
 	type: a
 	data: '1234567890'
+	buffer: '1234567890'
 	box:
 		x: 0
 		y: 0
@@ -43,6 +44,7 @@ createBarcodes = (a, b) -> [
 ,
 	type: b
 	data: '1234567891'
+	buffer: '1234567890'
 	box:
 		x: 0
 		y: 50
@@ -50,12 +52,15 @@ createBarcodes = (a, b) -> [
 		height: 1
 ]
 
-shouldHaveBarcode = (barcode) ->
-	should.exist(barcode.type)
-	should.exist(barcode.buffer)
-	should.exist(barcode.data)
-	should.not.exist(barcode.box)
-	should.not.exist(barcode.points)
+shouldHaveBarcode = (barcode, withBox = false) ->
+	should.exist barcode.type
+	should.exist barcode.buffer
+	should.exist barcode.data
+	if withBox
+		should.exist barcode.box
+	else
+		should.not.exist barcode.box
+	should.not.exist barcode.points
 	return
 
 describe 'Barcode recognizer', ->
@@ -70,7 +75,7 @@ describe 'Barcode recognizer', ->
 			[barcodes, imageOut] = findBarcodes barcodesImage, zxing
 			barcodes.should.have.length 4
 			for barcode in barcodes
-				shouldHaveBarcode barcode
+				shouldHaveBarcode barcode, true
 				barcode.buffer.toString('ascii').should.equal '3000001060'
 				barcode.data.should.equal '3000001060'
 				barcode.type.should.equal 'ITF'
@@ -81,7 +86,7 @@ describe 'Barcode recognizer', ->
 			[barcodes, imageOut] = findBarcodes printedImage, zxing
 			barcodes.should.have.length 3
 			for barcode in barcodes
-				shouldHaveBarcode barcode
+				shouldHaveBarcode barcode, true
 			imageOut.should.not.equal printedImage
 
 	describe 'match by position', ->
@@ -91,9 +96,12 @@ describe 'Barcode recognizer', ->
 			formData2 = {}
 			barcodes1 = createBarcodes 'ITF', 'ITF'
 			barcodes2 = createBarcodes 'ITF', 'ITF'
-			[barcodes2[0].box, barcodes2[1].box] = [barcodes2[1].box, barcodes2[0].box]
+			barcodes2[0].box.x += 1000
+			barcodes2[1].box.x += 1042
 			matchBarcodes(formData1, formSchema, barcodes1)
 			matchBarcodes(formData2, formSchema, barcodes2)
+			formData1.one.box.x = 1042
+			formData1.two.box.x = 1042
 			formData1.should.deep.equal formData2
 
 	describe 'match by validator', ->
