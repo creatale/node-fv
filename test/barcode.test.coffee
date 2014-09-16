@@ -106,16 +106,8 @@ describe 'Barcode recognizer', ->
 			formData.one.box.should.equal barcodes[0].box
 			should.not.exist(formData.two)
 
-		it 'should match 2 barcodes to "one" with low confidence', ->
-			formData = {}
-			barcodes = createBarcodes 'ITF', 'ITF'
-			matchBarcodes(formData, createFormSchema('ITF', 'PDF_417'), barcodes)
-			formData.one.confidence.should.equal 50
-			formData.one.value.data.should.equal(barcodes[0].data).or.equal(barcodes[1].data)
-			formData.one.box.should.equal(barcodes[0].box).or.equal(barcodes[1].box)
-			should.not.exist(formData.two)
-
 		it 'should match 1 barcode to "one" and "two" with low confidence', ->
+			#XXX: define this, once fieldSelection semantics are ready.
 			formData = {}
 			barcodes = createBarcodes 'ITF', 'DATA_MATRIX'
 			matchBarcodes(formData, createFormSchema('ITF', 'ITF'), barcodes)
@@ -126,7 +118,18 @@ describe 'Barcode recognizer', ->
 			formData.two.value.data.should.equal(barcodes[0].data)
 			formData.two.box.should.equal(barcodes[0].box)
 
+		it 'should match 2 barcodes to "one" with low confidence', ->
+			#XXX: define this, once fieldSelection semantics are ready.
+			formData = {}
+			barcodes = createBarcodes 'ITF', 'ITF'
+			matchBarcodes(formData, createFormSchema('ITF', 'PDF_417'), barcodes)
+			formData.one.confidence.should.equal 50
+			formData.one.value.data.should.equal(barcodes[0].data).or.equal(barcodes[1].data)
+			formData.one.box.should.equal(barcodes[0].box).or.equal(barcodes[1].box)
+			should.not.exist(formData.two)
+
 		it 'should match 2 barcodes to "one" and "two" and with low confidence', ->
+			#XXX: define this, once fieldSelection semantics are ready.
 			formData = {}
 			barcodes = createBarcodes 'ITF', 'DATA_MATRIX'
 			matchBarcodes(formData, createFormSchema('ITF', 'ITF'), barcodes)
