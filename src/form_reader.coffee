@@ -41,6 +41,10 @@ class Form
 		schemaToFields = estimateTransform formSchema.fields, formData, 1, 1, matchByPath
 		matchCheckboxes formData, formSchema, @data[3], @data[2], schemaToPage, schemaToFields
 		
+		# Ensure that all paths exist.
+		for field in formSchema.fields
+			unpack formData, field.path
+		
 		# Call form validators.
 		async.forEach formSchema.fields, (field, nextField) ->
 			if field.formValidator?
