@@ -57,10 +57,10 @@ module.exports.estimateTransform = (itemsA, itemsB, fallbackScale, requiredMatch
 
 	if transforms.length > requiredMatchCount
 		# Aggregate matches to find a stable solution.
-		byDistX = transforms.sort (a, b) -> a.distance[0] - b.distance[0]
+		byDistX = transforms.filter((i) -> i.distance[0] > 20).sort (a, b) -> a.distance[0] - b.distance[0]
 		scaleX = avgMedian3 (i.scale[0] for i in byDistX[-7..])
 		offsetX = avgMedian3 (i.offset[0] for i in byDistX[-7..])
-		byDistY = transforms.sort (a, b) -> a.distance[1] - b.distance[1]
+		byDistY = transforms.filter((i) -> i.distance[1] > 20).sort (a, b) -> a.distance[1] - b.distance[1]
 		scaleY = avgMedian3 (i.scale[1] for i in byDistY[-7..])
 		offsetY = avgMedian3 (i.offset[1] for i in byDistY[-7..])
 	else
