@@ -66,11 +66,11 @@ describe 'Checkbox recognizer', ->
 			]
 			matchCheckboxes formData, formSchema, checkboxes, [], schemaToPage, schemaToData
 			formData.one.confidence.should.equal 100
-			formData.one.value.be.true
+			formData.one.value.should.be.true
 			formData.one.box.should.equal checkboxes[0].box
-			formData.two.confidence.should.equal 100
-			formData.two.value.be.false
-			formData.two.box.should.equal formSchema.fields[1].box
+			formData.two.confidence.should.be.within 65, 67
+			formData.two.value.should.be.false
+			formData.two.box.should.deep.equal formSchema.fields[1].box
 
 		it 'should tick "one" (word) and untick "two"', ->
 			formData = {}
@@ -86,11 +86,11 @@ describe 'Checkbox recognizer', ->
 			]
 			matchCheckboxes formData, formSchema, [], words, schemaToPage, schemaToData
 			formData.one.confidence.should.equal 100
-			formData.one.value.equal 'X'
-			formData.one.box.should.equal checkboxes[0].box
-			formData.two.confidence.should.equal 100
-			formData.two.value.be.false
-			formData.two.box.should.equal formSchema.fields[1].box
+			formData.one.value.should.equal 'X'
+			formData.one.box.should.equal words[0].box
+			formData.two.confidence.should.equal 99
+			formData.two.value.should.be.false
+			formData.two.box.should.deep.equal formSchema.fields[1].box
 
 		it 'should have low confidence on "one" and "two", due to ambigous mark', ->
 			formData = {}
@@ -99,18 +99,18 @@ describe 'Checkbox recognizer', ->
 				checked: true
 				confidence: 100
 				box:
-					x: 25
-					y: 5
-					width: 10
-					height: 15
+					x: 24
+					y: 4
+					width: 2
+					height: 2
 			]
 			matchCheckboxes formData, formSchema, checkboxes, [], schemaToPage, schemaToData
-			formData.one.confidence.should.equal 50
-			formData.one.value.equal false
-			formData.one.box.should.equal checkboxes[0].box
-			formData.two.confidence.should.equal 50
-			formData.two.value.equal false
-			formData.two.box.should.equal checkboxes[0].box
+			formData.one.value.should.equal false
+			formData.one.confidence.should.be.within 49, 51
+			formData.one.box.should.deep.equal formSchema.fields[0].box
+			formData.two.value.should.equal false
+			formData.two.confidence.should.be.within 49, 51
+			formData.two.box.should.deep.equal formSchema.fields[1].box
 
 	describe 'match by position and validator', ->
 		it 'should tick "one" (word) and untick "two" (word)', ->
@@ -135,13 +135,13 @@ describe 'Checkbox recognizer', ->
 			]
 			matchCheckboxes formData, formSchema, [], words, schemaToPage, schemaToData
 			formData.one.confidence.should.equal 100
-			formData.one.value.equal 'a'
-			formData.one.box.should.equal checkboxes[0].box
-			formData.two.confidence.should.equal 100
-			formData.two.value.be.false
-			formData.two.box.should.equal formSchema.fields[1].box
+			formData.one.value.should.equal 'a'
+			formData.one.box.should.equal words[0].box
+			formData.two.confidence.should.equal 99
+			formData.two.value.should.be.false
+			formData.two.box.should.deep.equal formSchema.fields[1].box
 
-		it 'should tick "one" and untick "two" (word > marker, diffrent offsets)', ->
+		it 'should tick "one" and untick "two" (word > marker, different offsets)', ->
 			formData = {}
 			formSchema = createFormSchema 'a', undefined
 			checkboxes = [
@@ -157,17 +157,17 @@ describe 'Checkbox recognizer', ->
 				confidence: 100
 				text: 'a'
 				box:
-					x: 30
+					x: 20
 					y: 0
-					width: 10
+					width: 9
 					height: 20
 			]
 			matchCheckboxes formData, formSchema, checkboxes, words, schemaToPage, schemaToData
 			formData.one.confidence.should.equal 100
-			formData.one.value.equal 'a'
-			formData.one.box.should.equal checkboxes[0].box
-			formData.two.confidence.should.be.within 30, 70
-			formData.two.value.be.false
-			formData.two.box.should.equal formSchema.fields[1].box
+			formData.one.value.should.equal 'a'
+			formData.one.box.should.deep.equal words[0].box
+			formData.two.confidence.should.be.within 60, 70
+			formData.two.value.should.be.false
+			formData.two.box.should.deep.equal formSchema.fields[1].box
 
 		#XXX: define this, once fieldSelection semantics are ready.
