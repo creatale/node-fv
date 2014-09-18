@@ -34,7 +34,7 @@ formSchema =
 			height: 42
 
 	,
-		path: 'anchors.gender'
+		path: 'gender'
 		type: 'text'
 		box:
 			x: 1525
@@ -48,6 +48,6 @@ formSchema =
 formReader = new fv.FormReader 'eng'
 formReader.image = image
 form = formReader.find()
-form.match formSchema, (err, formData) =>
+form.match formSchema, (err, formData, projections) =>
 	console.log formData
-	fs.writeFile 'example.log.png', form.toImage().toBuffer('png')
+	fs.writeFile 'example.log.png', form.toImage(projections).toBuffer('png')

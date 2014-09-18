@@ -45,6 +45,7 @@ class Form
 		for field in formSchema.fields
 			unpack formData, field.path
 		
+		#XXX: remove fromValidators, as post-processing is out of scope.
 		# Call form validators.
 		async.forEach formSchema.fields, (field, nextField) ->
 			if field.formValidator?
@@ -53,11 +54,11 @@ class Form
 				nextField()
 		, (err) ->
 			return cb err if err?
-			cb null, formData
+			cb null, formData, [schemaToPage, schemaToFields]
 
 		return
 
-	toImage: =>
+	toImage: (projections) =>
 		resultImage = new dv.Image @images[0].width * @images.length, @images[0].height, 32
 		imageOffset = (box, index) =>
 			return {
@@ -76,14 +77,20 @@ class Form
 					resultImage.drawBox(imageOffset(boxed.box, index), 2, 0, 0, 255, 0.5)
 					resultImage.drawBox(imageOffset(boxed.candidate, index), 2, 255, 0, 0)
 
-		#for anchor, index in @anchors
-		#	box =
-		#		x: anchor.word.box.x + anchor.offset.x
-		#		y: anchor.word.box.y + anchor.offset.y
-		#		width: anchor.word.box.width
-		#		height: anchor.word.box.height
-		#	resultImage.drawBox(imageOffset(box, 1), 4, 0, 255, 50, 0.5)
-		#	resultImage.drawLine(imageOffset(box, 1), imageOffset(anchor.word.box, 1), 4, 0, 255, 255, 0.5)
+		for projection in projections ? []
+			box = projection
+				x: 0
+				y: 0
+				width: 100
+				height: 100
+			p0 = {x: 0, y: 0}
+			p1 = {x: box.x, y: box.y}
+			p2 = {x: box.x + box.width, y: box.y}
+			p3 = {x: box.x, y: box.y + box.height}
+			for image, index in @images when image? 
+				resultImage.drawLine(imageOffset(p0, index), imageOffset(p1, index), 4, 0, 255, 255, 0.5)
+				resultImage.drawLine(imageOffset(p1, index), imageOffset(p2, index), 4, 0, 255, 255, 0.5)
+				resultImage.drawLine(imageOffset(p1, index), imageOffset(p3, index), 4, 0, 255, 255, 0.5)
 
 		return resultImage
 
