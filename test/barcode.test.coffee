@@ -6,37 +6,35 @@ fs = require 'fs'
 {matchBarcodes} = require '../src/match_barcodes'
 
 createFormSchema = (a, b) ->
-	fields: [
-		path: 'one'
-		type: 'barcode'
-		box:
-			x: 0
-			y: 0
-			width: 100
-			height: 50
-		fieldValidator: (value) ->
-			shouldHaveBarcode value
-			return value.type is a
-		fieldSelector: (choices) ->
-			choice = choices[0]
-			choice.foobar = true
-			return choices
-	,
-		path: 'two'
-		type: 'barcode'
-		box:
-			x: 0
-			y: 50
-			width: 100
-			height: 50
-		fieldValidator: (value) ->
-			shouldHaveBarcode value
-			return value.type is b
-		fieldSelector: (choices) ->
-			choice = choices[0]
-			choice.foobar = true
-			return choices
-	]
+	that =
+		called: []
+		fields: [
+			path: 'one'
+			type: 'barcode'
+			box:
+				x: 0
+				y: 0
+				width: 100
+				height: 50
+			fieldValidator: (value) ->
+				shouldHaveBarcode value
+				return value.type is a
+			fieldSelector: (choices) -> 
+				that.called.push 'one'
+				return 0
+		,
+			path: 'two'
+			type: 'barcode'
+			box:
+				x: 0
+				y: 50
+				width: 100
+				height: 50
+			fieldValidator: (value) ->
+				shouldHaveBarcode value
+				return value.type is b
+		]
+	return that
 
 createBarcodes = (a, b) -> [
 	type: a
@@ -68,6 +66,8 @@ shouldHaveBarcode = (barcode, withBox = false) ->
 		should.not.exist barcode.box
 	should.not.exist barcode.points
 	return
+
+schemaToPage = ({x, y, width, height}) -> {x, y, width, height}
 
 describe 'Barcode recognizer', ->
 	describe 'find', ->
@@ -102,10 +102,10 @@ describe 'Barcode recognizer', ->
 			formData2 = {}
 			barcodes1 = createBarcodes 'ITF', 'ITF'
 			barcodes2 = createBarcodes 'ITF', 'ITF'
-			barcodes2[0].box.x += 1000
+			barcodes2[0].box.x += 1042
 			barcodes2[1].box.x += 1042
-			matchBarcodes(formData1, formSchema, barcodes1)
-			matchBarcodes(formData2, formSchema, barcodes2)
+			matchBarcodes(formData1, formSchema, barcodes1, schemaToPage)
+			matchBarcodes(formData2, formSchema, barcodes2, schemaToPage)
 			formData1.one.box.x = 1042
 			formData1.two.box.x = 1042
 			formData1.should.deep.equal formData2
@@ -114,58 +114,63 @@ describe 'Barcode recognizer', ->
 		it 'should match 1 barcode to "one" and drop others', ->
 			formData = {}
 			barcodes = createBarcodes 'ITF', 'DATA_MATRIX'
-			matchBarcodes(formData, createFormSchema('ITF', 'PDF_417'), barcodes)
+			matchBarcodes(formData, createFormSchema('ITF', 'PDF_417'), barcodes, schemaToPage)
 			formData.one.confidence.should.equal 100
 			formData.one.value.data.should.equal barcodes[0].data
 			formData.one.box.should.equal barcodes[0].box
-			should.not.exist(formData.one.foobar)
-			should.not.exist(formData.two)
+			formData.one.conflicts.should.have.length 0
+			should.exist(formData.two)
 
-		it 'should match 1 barcode to "one" and "two" with low confidence', ->
+		it 'should match 1 barcode to "one" and "two" with low conflicts', ->
 			formData = {}
 			barcodes = createBarcodes 'ITF', 'DATA_MATRIX'
-			matchBarcodes(formData, createFormSchema('ITF', 'ITF'), barcodes)
-			formData.one.confidence.should.equal 50
+			matchBarcodes(formData, createFormSchema('ITF', 'ITF'), barcodes, schemaToPage)
+			formData.one.confidence.should.equal 100
 			formData.one.value.data.should.equal(barcodes[0].data)
 			formData.one.box.should.equal(barcodes[0].box)
-			formData.two.confidence.should.equal 50
+			formData.one.conflicts.should.have.length 2
+			formData.two.confidence.should.equal 100
 			formData.two.value.data.should.equal(barcodes[0].data)
 			formData.two.box.should.equal(barcodes[0].box)
-			(formData.one.foobar? isnt formData.two.foobar?).should.be.true
-
-		it 'should match 2 barcodes to "one" with low confidence', ->
+			formData.two.conflicts.should.have.length 2
+			
+		it 'should match 2 barcodes to "one" using field selector', ->
 			formData = {}
 			barcodes = createBarcodes 'ITF', 'ITF'
-			matchBarcodes(formData, createFormSchema('ITF', 'PDF_417'), barcodes)
-			formData.one.confidence.should.equal 50
-			formData.one.value.data.should.equal(barcodes[0].data).or.equal(barcodes[1].data)
-			formData.one.box.should.equal(barcodes[0].box).or.equal(barcodes[1].box)
-			formData.one.foobar.should.be.true
-			should.not.exist(formData.two)
+			formSchema = createFormSchema 'ITF', 'PDF_417'
+			matchBarcodes(formData, formSchema, barcodes, schemaToPage)
+			formData.one.confidence.should.equal 100
+			(formData.one.value.data in [barcodes[0].data, barcodes[1].data]).should.be.true
+			(formData.one.box in [barcodes[0].box, barcodes[1].box]).should.be.true
+			formData.one.conflicts.should.have.length 0
+			formSchema.called.should.contain 'one'
+			should.exist(formData.two)
 
-		it 'should match 2 barcodes to "one" and "two" and with low confidence', ->
+		it 'should match 2 barcodes to "one" and "two" using field selector with conflicts', ->
 			formData = {}
-			barcodes = createBarcodes 'ITF', 'DATA_MATRIX'
-			matchBarcodes(formData, createFormSchema('ITF', 'ITF'), barcodes)
-			formData.one.confidence.should.equal 50
-			formData.one.foobar.should.be.true
-			formData.two.confidence.should.equal 50
-			formData.two.foobar.should.be.true
-			a = formData.one.value.data is barcodes[0].data and formData.two.value.data is barcodes[1].data and
-				formData.one.box is barcodes[0].box and formData.two.box is barcodes[1].box
-			b = formData.one.value.data is barcodes[1].data and formData.two.value.data is barcodes[0].data and
-				formData.one.box is barcodes[1].box and formData.two.box is barcodes[0].box
-			(a or b).should.be.true
+			barcodes = createBarcodes 'ITF', 'ITF'
+			formSchema = createFormSchema 'ITF', 'ITF'
+			matchBarcodes(formData, formSchema, barcodes, schemaToPage)
+			formData.one.confidence.should.equal 100
+			formData.one.conflicts.should.have.length 2
+			(formData.one.value.data in [barcodes[0].data, barcodes[1].data]).should.be.true
+			(formData.one.box in [barcodes[0].box, barcodes[1].box]).should.be.true
+			formSchema.called.should.contain 'one'
+			formData.two.confidence.should.equal 100
+			formData.two.conflicts.should.have.length 2
+			(formData.two.value.data in [barcodes[0].data, barcodes[1].data]).should.be.true
+			(formData.two.box in [barcodes[0].box, barcodes[1].box]).should.be.true
 			
 		it 'should match 1 barcode to "one" and 1 barcode to "two"', ->
 			formData = {}
 			barcodes = createBarcodes 'ITF', 'DATA_MATRIX'
-			matchBarcodes(formData, createFormSchema('ITF', 'DATA_MATRIX'), barcodes)
+			matchBarcodes(formData, createFormSchema('ITF', 'DATA_MATRIX'), barcodes, schemaToPage)
 			formData.one.confidence.should.equal 100
 			formData.one.value.data.should.equal(barcodes[0].data)
 			formData.one.box.should.equal(barcodes[0].box)
-			should.not.exist formData.one.foobar
+			formData.one.conflicts.should.have.length 0
 			formData.two.confidence.should.equal 100
 			formData.two.value.data.should.equal(barcodes[1].data)
 			formData.two.box.should.equal(barcodes[1].box)
-			should.not.exist formData.two.foobar
+			formData.two.conflicts.should.have.length 0
+			

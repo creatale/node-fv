@@ -24,9 +24,6 @@ class Form
 	match: (formSchema, cb) =>
 		formData = {}
 
-		# Match barcodes invariant to transformation changes.
-		matchBarcodes formData, formSchema, @data[1]
-
 		# Test if schema to page mapping was provided, estimate otherwise.
 		if typeof formSchema.schemaToPage is 'function'
 			schemaToPage = formSchema.schemaToPage
@@ -34,16 +31,15 @@ class Form
 			fallbackScale = @images[0].width / formSchema.page.width
 			schemaToPage = estimateTransform formSchema.words, @data[2], fallbackScale
 
+		# Match barcodes invariant to transformation changes.
+		matchBarcodes formData, formSchema, @data[1], schemaToPage
+
 		# Match text and verify cleanliness of empty text fields.
 		{anchors} = matchText formData, formSchema, @data[2], schemaToPage, @images[0]
 		@anchors = anchors
 		# Estimate schema to fields transform and match checkboxes.
 		schemaToFields = estimateTransform formSchema.fields, formData, 1, 1, matchByPath
 		matchCheckboxes formData, formSchema, @data[3], @data[2], schemaToPage, schemaToFields
-		
-		# Ensure that all paths exist.
-		for field in formSchema.fields
-			unpack formData, field.path
 		
 		# Call form validators.
 		async.forEach formSchema.fields, (field, nextField) ->
