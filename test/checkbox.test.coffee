@@ -43,7 +43,7 @@ describe 'Checkbox recognizer', ->
 		it 'should find checkboxes in synthetic image', ->
 			checkboxesImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/checkboxes.png'))
 			[checkboxes, imageOut] = findCheckboxes checkboxesImage
-			checkboxes.should.have.length 12
+			checkboxes.should.have.length 13
 			imageOut.should.not.equal checkboxesImage
 
 		it 'should find checkboxes in content image', ->

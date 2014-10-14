@@ -14,7 +14,7 @@ UPPER_UNCERTAIN_SCORE = 4    # confidence 0
 detectCandidates = (binarizedImage) ->
 	candidates = []
 	for candidate in binarizedImage.dilate(3, 3).connectedComponents(8)
-		if 0.5 < candidate.width / candidate.height < 2 and 10 < candidate.width < (binarizedImage.width / 3)
+		if 0.5 < candidate.width / candidate.height < 5 and 10 < candidate.width < (binarizedImage.width / 3)
 			candidates.push candidate
 	return candidates
 
