@@ -2,12 +2,12 @@
 module.exports.length = (vector) ->
 	return Math.sqrt(vector.x * vector.x + vector.y * vector.y)
 
-# XXX
-module.exports.distance = (box1, box2) ->
-	center1X = box1.x + (box1.width ? 0) / 2
-	center1Y = box1.y + (box1.height ? 0) / 2
-	center2X = box2.x + (box2.width ? 0) / 2
-	center2Y = box2.y + (box2.height ? 0) / 2
+# Computes the distance between two vectors or boxes.
+module.exports.distance = (boxA, boxB) ->
+	center1X = boxA.x + (boxA.width ? 0) / 2
+	center1Y = boxA.y + (boxA.height ? 0) / 2
+	center2X = boxB.x + (boxB.width ? 0) / 2
+	center2Y = boxB.y + (boxB.height ? 0) / 2
 	return Math.abs(center1X - center2X) + Math.abs(center1Y - center2Y)
 
 # Computes the euclidean distance vector between two vectors.
@@ -17,8 +17,8 @@ module.exports.distanceVector = (vectorA, vectorB) ->
 		y: vectorA.y - vectorB.y
 	}
 
-# Compute manhattan vector between two boxes.
-module.exports.manhattanVector = (boxA, boxB) ->
+# Compute the distance between two boxes.
+module.exports.boxDistanceVector = (boxA, boxB) ->
 	return {
 		x: Math.max(boxA.x, boxB.x) - Math.min(boxA.x + boxA.width, boxB.x + boxB.width)
 		y: Math.max(boxA.y, boxB.y) - Math.min(boxA.y + boxA.height, boxB.y + boxB.height)

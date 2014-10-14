@@ -1,5 +1,5 @@
 dv = require 'dv'
-{length, distanceVector, manhattanVector, intersectBox, boundingBox} = require './math'
+{length, distanceVector, boxDistanceVector, intersectBox, boundingBox} = require './math'
 
 # Compiles a mask with lines that have a certain length.
 detectLineMask = (image, minLineLength) ->
@@ -44,7 +44,7 @@ isSameBlock = (fontWidth, fontHeight) ->
 	return (boxA, boxB) ->
 		bottomA = boxA.y + boxA.height
 		bottomB = boxB.y + boxB.height
-		delta = manhattanVector boxA, boxB
+		delta = boxDistanceVector boxA, boxB
 		sameLine = Math.abs(bottomA - bottomB) < fontHeight / 2 and delta.x < fontWidth * 3
 		return sameLine or intersectBox(boxA, boxB)
 
