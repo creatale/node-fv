@@ -1,100 +1,105 @@
 unpack = require './unpack'
 {estimateTransform} = require './estimate_transform'
-dv = require 'dv'
+{distance} = require './math'
 
-# Match checkboxes to form schema.
-#
-module.exports.matchCheckboxes = (formData, formSchema, checkboxes, words, schemaToPage, schemaToData) ->
-	checkboxFields = formSchema.fields.filter((field) -> field.type is 'checkbox')
+findClosestShortWord = (words, box, maxDistance) ->
+	minDistance = maxDistance
+	closestIndex = -1
+	for word, index in words when word.text.length < 3
+		dist = distance(word.box, box)
+		if dist < minDistance
+			minDistance = dist
+			closestIndex = index
+	return closestIndex
 
-	#for word in words when word.text.length < 3
-	#	logImage.drawBox word.box, 1, 255, 255, 0
-	#for checkbox in checkboxes
-	#	logImage.drawBox checkbox.box, 1, 255, 0, 255
+matchByWords = (formData, fields, words, schemaToPage, schemaToData) ->
+	matchedFields = []
+	matches = []
+	wordUsage = []
+	for field in fields
+		# Find short words close to estimated locations (data and page transform).
+		dataBox = schemaToData field.box
+		closeIndex = findClosestShortWord words, dataBox, dataBox.width
+		closeIndex = findClosestShortWord words, schemaToPage(field.box), dataBox.width if closeIndex is -1
+		continue if closeIndex is -1
+		# Validate short words.
+		if not field.fieldValidator? or field.fieldValidator(words[closeIndex].text)
+			wordUsage[closeIndex] ?= []
+			wordUsage[closeIndex].push field.path
+			matchedFields.push field
+			matches.push closeIndex
+	# Assign matching fields.
+	for field, index in matchedFields
+		index = matches[index]
+		fieldData = unpack formData, field.path
+		fieldData.value = words[index].text
+		fieldData.confidence = words[index].confidence
+		fieldData.box = words[index].box
+		fieldData.conflicts = if wordUsage[index].length > 1 then wordUsage[index] else []
+	return matchedFields
 
-	assignedFields = matchByWordsAndContentOffset formData, checkboxFields, words, schemaToPage, schemaToData
-	remainingFields = (field for field in checkboxFields when field not in assignedFields)
-	matchByCheckboxCandidates formData, remainingFields, checkboxes, schemaToPage
+findClosestMark = (marks, box, maxDistance) ->
+	minDistance = maxDistance
+	closestIndex = -1
+	for mark, index in marks
+		dist = distance(mark.box, box)
+		if dist < minDistance
+			minDistance = dist
+			closestIndex = index
+	return closestIndex
+
+matchByMark = (formData, fields, marks, schemaToPage) ->
+	matches = {}
+	markUsage = []
+	for field in fields
+		# Find close marks using estimated locations (only page transform).
+		pageBox = schemaToPage field.box
+		nearDistance = pageBox.width
+		farDistance = pageBox.width * 3
+		closeIndex = findClosestMark marks, pageBox, farDistance
+		if closeIndex is -1
+			# No marks with less than far distance found, thus false.
+			matches[field.path] = 
+				index: -1
+				value: false
+				confidence: 100
+				box: pageBox
+		else if distance(marks[closeIndex].box, pageBox) > nearDistance
+			# Mark between near and far distance found, thus false with reduced confidence.
+			matches[field.path] =
+				index: -1
+				value: false
+				confidence: Math.round((distance(marks[closeIndex].box, pageBox) / farDistance) * 100)
+				box: pageBox
+		else
+			# Near mark found, thus use it.
+			matches[field.path] = 
+				index: closeIndex
+				value: marks[closeIndex].checked
+				confidence: marks[closeIndex].confidence
+				box: marks[closeIndex].box
+			markUsage[closeIndex] ?= []
+			markUsage[closeIndex].push field.path
+	# Assign matching fields.
+	for field in fields
+		match = matches[field.path]
+		fieldData = unpack formData, field.path
+		fieldData.value = match.value
+		fieldData.confidence = match.confidence
+		fieldData.box = match.box
+		if match.index is -1
+			fieldData.conflicts = []
+		else
+			fieldData.conflicts = if markUsage[match.index].length > 1 then markUsage[match.index] else []
 	return
 	
-matchByWordsAndContentOffset = (formData, fields, words, schemaToPage, schemaToData) ->
-	assignedByWord = []
-	assignedWords = []
-	for field in fields
-		# Position of checkbox according to field content offsets
-		dataPos = schemaToData field.box
-		#logImage.drawBox dataPos, 2, 255, 0, 0
-		closeWord = findClosestShortWord words, dataPos, dataPos.width
-		closeWord ?= findClosestShortWord words, schemaToPage(field.box), dataPos.width
-		#logImage.drawBox closeWord.box, 3, 0, 255, 0 if closeWord?
-		fieldData = unpack formData, field.path
-
-		if closeWord? and field.fieldValidator? closeWord.text
-			if closeWord in assignedWords
-				index = assignedWords.indexOf closeWord
-				#console.log 'Conflict: ' + closeWord.text + ' might match ' + assignedByWord[index]?.path + ' and ' + field.path
-				assignedByWord[index] = null
-				continue
-			#console.log field.path, 'Decision from words at content offset'
-			#logImage.drawBox closeWord.box, 3, 0, 255, 0
-			fieldData.value = closeWord.text
-			fieldData.confidence = closeWord.confidence
-			fieldData.box = closeWord.box
-			assignedByWord.push field
-			assignedWords.push closeWord
-			
-	return assignedByWord
-
-matchByCheckboxCandidates = (formData, fields, checkboxes, schemaToPage) ->
-	for field in fields
-		pos = schemaToPage field.box
-		fieldData = unpack formData, field.path
-		#logImage.drawBox pos, 3, 0, 0, 255
-		# FIXME: Because words are removed before findCheckbox runs, this may be false negative
-		# Only accept candidates closer than CLOSE_DISTANCE, but reduce confidence when less than FAR_DISTANCE.
-		CLOSE_DISTANCE = pos.width * 1
-		FAR_DISTANCE = pos.width * 3
-		chosenCheckbox = findClosestCheckbox checkboxes, pos, FAR_DISTANCE
-
-		if chosenCheckbox? and distance(chosenCheckbox.box, pos) <= CLOSE_DISTANCE
-			#console.log field.path, 'Checkbox candidate found close', chosenCheckbox
-			fieldData.value = chosenCheckbox.checked
-			fieldData.confidence = chosenCheckbox.confidence
-			fieldData.box = chosenCheckbox.box
-		else
-			if not chosenCheckbox?
-				confidence = 99
-			else
-				confidence = (distance(chosenCheckbox.box, pos) / FAR_DISTANCE) * 99
-			#console.log field.path, 'No checkbox candidate'
-			fieldData.value = false
-			fieldData.confidence = confidence
-			fieldData.box = pos
-	#require('fs').writeFileSync('checkboxes.png', logImage.toBuffer('png'))
-	
-distance = (box1, box2) ->
-	center1X = box1.x + (box1.width ? 0) / 2
-	center1Y = box1.y + (box1.height ? 0) / 2
-	center2X = box2.x + (box2.width ? 0) / 2
-	center2Y = box2.y + (box2.height ? 0) / 2
-	return Math.abs(center1X - center2X) + Math.abs(center1Y - center2Y)
-
-findClosestShortWord = (words, pos, maxDistance) ->
-	minDistance = maxDistance
-	closest = null
-	for word in words when word.text.length < 3
-		dist = distance(word.box, pos)
-		if dist < minDistance
-			minDistance = dist
-			closest = word
-	return closest
-
-findClosestCheckbox = (checkboxes, pos, maxDistance) ->
-	minDistance = maxDistance
-	closest = null
-	for checkbox in checkboxes
-		dist = distance(checkbox.box, pos)
-		if dist < minDistance
-			minDistance = dist
-			closest = checkbox
-	return closest
+# Match checkboxes to form schema.
+#
+# This process is content- and location-sensitive. Short words are preferred over marks.
+# XXX: false negatives are to be expected when words are invalidated!
+module.exports.matchCheckboxes = (formData, formSchema, marks, words, schemaToPage, schemaToData) ->
+	checkboxFields = formSchema.fields.filter((field) -> field.type is 'checkbox')
+	assignedFields = matchByWords formData, checkboxFields, words, schemaToPage, schemaToData
+	remainingFields = (field for field in checkboxFields when field not in assignedFields)
+	matchByMark formData, remainingFields, marks, schemaToPage
+	return

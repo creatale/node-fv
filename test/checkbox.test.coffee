@@ -6,29 +6,31 @@ fs = require 'fs'
 {matchCheckboxes} = require '../src/match_checkboxes'
 
 createFormSchema = (a, b) ->
-	fields: [
-		path: 'one'
-		type: 'checkbox'
-		box:
-			x: 10
-			y: 0
-			width: 10
-			height: 20
-		fieldValidator: (value) -> if not a? then true else value is a
-		fieldSelector: (choices) ->
-			choice = choices[0]
-			choice.foobar = true
-			return choices
-	,
-		path: 'two'
-		type: 'checkbox'
-		box:
-			x: 30
-			y: 0
-			width: 10
-			height: 20
-		fieldValidator: if not b? then null else (value) -> value is b
-	]
+	that =
+		called: []
+		fields: [
+			path: 'one'
+			type: 'checkbox'
+			box:
+				x: 10
+				y: 0
+				width: 10
+				height: 20
+			fieldValidator: (value) -> if not a? then true else value is a
+			fieldSelector: (choices) ->
+				that.called.push 'one'
+				return 0
+		,
+			path: 'two'
+			type: 'checkbox'
+			box:
+				x: 30
+				y: 0
+				width: 10
+				height: 20
+			fieldValidator: if not b? then null else (value) -> value is b
+		]
+	return that
 
 schemaToPage = ({x, y, width, height}) -> {x, y, width, height}
 
@@ -65,18 +67,20 @@ describe 'Checkbox recognizer', ->
 					height: 20
 			]
 			matchCheckboxes formData, formSchema, checkboxes, [], schemaToPage, schemaToData
-			formData.one.confidence.should.equal 100
+			formData.one.confidence.should.equal checkboxes[0].confidence
 			formData.one.value.should.be.true
 			formData.one.box.should.equal checkboxes[0].box
+			formData.one.conflicts.should.have.length 0
 			formData.two.confidence.should.be.within 65, 67
 			formData.two.value.should.be.false
 			formData.two.box.should.deep.equal formSchema.fields[1].box
+			formData.two.conflicts.should.have.length 0
 
 		it 'should tick "one" (word) and untick "two"', ->
 			formData = {}
 			formSchema = createFormSchema undefined, undefined
 			words = [
-				confidence: 100
+				confidence: 42
 				text: 'X'
 				box:
 					x: 10
@@ -85,12 +89,14 @@ describe 'Checkbox recognizer', ->
 					height: 20
 			]
 			matchCheckboxes formData, formSchema, [], words, schemaToPage, schemaToData
-			formData.one.confidence.should.equal 100
-			formData.one.value.should.equal 'X'
+			formData.one.confidence.should.equal words[0].confidence
+			formData.one.value.should.equal words[0].text
 			formData.one.box.should.equal words[0].box
-			formData.two.confidence.should.equal 99
+			formData.one.conflicts.should.have.length 0
+			formData.two.confidence.should.equal 100
 			formData.two.value.should.be.false
 			formData.two.box.should.deep.equal formSchema.fields[1].box
+			formData.two.conflicts.should.have.length 0
 
 		it 'should have low confidence on "one" and "two", due to ambigous mark', ->
 			formData = {}
@@ -108,9 +114,11 @@ describe 'Checkbox recognizer', ->
 			formData.one.value.should.equal false
 			formData.one.confidence.should.be.within 49, 51
 			formData.one.box.should.deep.equal formSchema.fields[0].box
+			formData.one.conflicts.should.have.length 0
 			formData.two.value.should.equal false
 			formData.two.confidence.should.be.within 49, 51
 			formData.two.box.should.deep.equal formSchema.fields[1].box
+			formData.two.conflicts.should.have.length 0
 
 	describe 'match by position and validator', ->
 		it 'should tick "one" (word) and untick "two" (word)', ->
@@ -137,9 +145,11 @@ describe 'Checkbox recognizer', ->
 			formData.one.confidence.should.equal 100
 			formData.one.value.should.equal 'a'
 			formData.one.box.should.equal words[0].box
-			formData.two.confidence.should.equal 99
+			formData.one.conflicts.should.have.length 0
+			formData.two.confidence.should.equal 100
 			formData.two.value.should.be.false
 			formData.two.box.should.deep.equal formSchema.fields[1].box
+			formData.two.conflicts.should.have.length 0
 
 		it 'should tick "one" and untick "two" (word > marker, different offsets)', ->
 			formData = {}
@@ -166,8 +176,8 @@ describe 'Checkbox recognizer', ->
 			formData.one.confidence.should.equal 100
 			formData.one.value.should.equal 'a'
 			formData.one.box.should.deep.equal words[0].box
+			formData.one.conflicts.should.have.length 0
 			formData.two.confidence.should.be.within 60, 70
 			formData.two.value.should.be.false
 			formData.two.box.should.deep.equal formSchema.fields[1].box
-
-		#XXX: define this, once fieldSelection semantics are ready.
+			formData.two.conflicts.should.have.length 0

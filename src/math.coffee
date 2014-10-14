@@ -2,6 +2,14 @@
 module.exports.length = (vector) ->
 	return Math.sqrt(vector.x * vector.x + vector.y * vector.y)
 
+# XXX
+module.exports.distance = (box1, box2) ->
+	center1X = box1.x + (box1.width ? 0) / 2
+	center1Y = box1.y + (box1.height ? 0) / 2
+	center2X = box2.x + (box2.width ? 0) / 2
+	center2Y = box2.y + (box2.height ? 0) / 2
+	return Math.abs(center1X - center2X) + Math.abs(center1Y - center2Y)
+
 # Computes the euclidean distance vector between two vectors.
 module.exports.distanceVector = (vectorA, vectorB) ->
 	return {
