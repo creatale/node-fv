@@ -40,10 +40,6 @@ module.exports.matchBarcodes = (formData, formSchema, barcodes, schemaToPage) ->
 			fieldData.conflicts = if matches[choice].paths.length > 1 then matches[choice].paths else []
 		else
 			fieldData = unpack formData, field.path
-			fieldData.value = 
-				type: 'NULL'
-				data: null
-				buffer: new Buffer(0)
 			fieldData.confidence = 100
 			fieldData.box = schemaToPage field.box
 			fieldData.conflicts = []
