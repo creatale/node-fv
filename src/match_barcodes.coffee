@@ -1,4 +1,5 @@
 unpack = require './unpack'
+{distanceVector, length, center} = require './math'
 
 barcodeToValue = (barcode) ->
 	type: barcode.type
@@ -6,8 +7,6 @@ barcodeToValue = (barcode) ->
 	buffer: barcode.buffer
 
 # Match barcode data to form schema.
-#
-# This process is content-sensitive, but not location-senstive.
 module.exports.matchBarcodes = (formData, formSchema, barcodes, schemaToPage) ->
 	barcodeFields = formSchema.fields.filter (field) -> field.type is 'barcode'
 	# Map barcodes and fields to matches.
@@ -16,6 +15,13 @@ module.exports.matchBarcodes = (formData, formSchema, barcodes, schemaToPage) ->
 		value = barcodeToValue barcode
 		validFields = barcodeFields.filter (field) -> not field.fieldValidator? or field.fieldValidator(value)
 		for field in validFields
+			# If searchRadius is set, additionally filter matches by distance
+			if field.searchRadius > 0
+				projection = schemaToPage(field.box)
+				distance = length distanceVector(center(projection), center(barcode.box))
+				radius = Math.max(projection.width, projection.height) / 2
+				continue if distance > radius * field.searchRadius
+
 			matchMap[field.path] ?= []
 			matchMap[field.path].push 
 				barcode: barcode

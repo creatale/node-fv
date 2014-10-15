@@ -2,7 +2,7 @@ dv = require 'dv'
 {boundingBox} = require './math'
 
 # Width of the quiet zone around a barcode.
-QUIETZONE_WIDTH = 25
+QUIETZONE_WIDTH = 35
 
 # Find potential barcodes in *image*.
 detectCandidates = (image) ->

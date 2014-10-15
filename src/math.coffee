@@ -10,6 +10,13 @@ module.exports.distance = (boxA, boxB) ->
 	center2Y = boxB.y + (boxB.height ? 0) / 2
 	return Math.abs(center1X - center2X) + Math.abs(center1Y - center2Y)
 
+# Returns the center point/vector of a box.
+module.exports.center = (box) ->
+	return {
+		x: box.x + box.width / 2
+		y: box.y + box.height / 2
+	}
+
 # Computes the euclidean distance vector between two vectors.
 module.exports.distanceVector = (vectorA, vectorB) ->
 	return {
