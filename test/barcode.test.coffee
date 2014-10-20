@@ -128,11 +128,11 @@ describe 'Barcode recognizer', ->
 			formData.one.confidence.should.equal 100
 			formData.one.value.data.should.equal(barcodes[0].data)
 			formData.one.box.should.equal(barcodes[0].box)
-			formData.one.conflicts.should.have.length 2
+			formData.one.conflicts.should.have.length 1
 			formData.two.confidence.should.equal 100
 			formData.two.value.data.should.equal(barcodes[0].data)
 			formData.two.box.should.equal(barcodes[0].box)
-			formData.two.conflicts.should.have.length 2
+			formData.two.conflicts.should.have.length 1
 			
 		it 'should match 2 barcodes to "one" using field selector', ->
 			formData = {}
@@ -152,12 +152,12 @@ describe 'Barcode recognizer', ->
 			formSchema = createFormSchema 'ITF', 'ITF'
 			matchBarcodes(formData, formSchema, barcodes, schemaToPage)
 			formData.one.confidence.should.equal 100
-			formData.one.conflicts.should.have.length 2
+			formData.one.conflicts.should.have.length 1
 			(formData.one.value.data in [barcodes[0].data, barcodes[1].data]).should.be.true
 			(formData.one.box in [barcodes[0].box, barcodes[1].box]).should.be.true
 			formSchema.called.should.contain 'one'
 			formData.two.confidence.should.equal 100
-			formData.two.conflicts.should.have.length 2
+			formData.two.conflicts.should.have.length 1
 			(formData.two.value.data in [barcodes[0].data, barcodes[1].data]).should.be.true
 			(formData.two.box in [barcodes[0].box, barcodes[1].box]).should.be.true
 			
