@@ -69,8 +69,8 @@ shouldHaveBarcode = (barcode, withBox = false) ->
 
 schemaToPage = ({x, y, width, height}) -> {x, y, width, height}
 
-describe 'Barcode recognizer', ->
-	describe 'find', ->
+describe 'Barcode', ->
+	describe 'recognizer', ->
 		zxing = null
 	
 		before ->
@@ -95,7 +95,7 @@ describe 'Barcode recognizer', ->
 				shouldHaveBarcode barcode, true
 			imageOut.should.not.equal printedImage
 
-	describe 'match by position', ->
+	describe 'by position', ->
 		it 'should not care', ->
 			formSchema = createFormSchema 'ITF', 'ITF'
 			formData1 = {}
@@ -110,7 +110,7 @@ describe 'Barcode recognizer', ->
 			formData1.two.box.x = 1042
 			formData1.should.deep.equal formData2
 
-	describe 'match by validator', ->
+	describe 'by validator', ->
 		it 'should match 1 barcode to "one" and drop others', ->
 			formData = {}
 			barcodes = createBarcodes 'ITF', 'DATA_MATRIX'

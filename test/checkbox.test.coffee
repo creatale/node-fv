@@ -37,7 +37,7 @@ schemaToPage = ({x, y, width, height}) -> {x, y, width, height}
 schemaToData = ({x, y, width, height}) -> {x: x + 10, y: y + 10, width, height}
 
 describe 'Checkbox recognizer', ->
-	describe 'find', ->
+	describe 'recognizer', ->
 		femaleBox = { x: 1480, y: 300, width: 24, height: 23 }
 
 		it 'should find checkboxes in synthetic image', ->
@@ -53,7 +53,7 @@ describe 'Checkbox recognizer', ->
 			imageOut.should.not.equal contentImage
 			checkboxes.some((checkbox) -> Math.abs(checkbox.box.x - femaleBox.x) < 10).should.be.ok
 
-	describe 'match by position', ->
+	describe 'by position', ->
 		it 'should tick "one" (mark) and untick "two"', ->
 			formData = {}
 			formSchema = createFormSchema undefined, undefined
@@ -120,7 +120,7 @@ describe 'Checkbox recognizer', ->
 			formData.two.box.should.deep.equal formSchema.fields[1].box
 			formData.two.conflicts.should.have.length 0
 
-	describe 'match by position and validator', ->
+	describe 'by position and validator', ->
 		it 'should tick "one" (word) and untick "two" (word)', ->
 			formData = {}
 			formSchema = createFormSchema 'a', 'x'
