@@ -29,13 +29,13 @@ matchByWords = (formData, fields, words, schemaToPage, schemaToData) ->
 			matchedFields.push field
 			matches.push closeIndex
 	# Assign matching fields.
-	for field, index in matchedFields
-		index = matches[index]
+	for field, fieldIndex in matchedFields
+		index = matches[fieldIndex]
 		fieldData = unpack formData, field.path
 		fieldData.value = words[index].text
 		fieldData.confidence = words[index].confidence
 		fieldData.box = words[index].box
-		fieldData.conflicts = if wordUsage[index].length > 1 then wordUsage[index] else []
+		fieldData.conflicts = wordUsage[index].filter (path) -> path isnt field.path
 	return matchedFields
 
 findClosestMark = (marks, box, maxDistance) ->

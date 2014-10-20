@@ -43,7 +43,7 @@ module.exports.matchBarcodes = (formData, formSchema, barcodes, schemaToPage) ->
 			fieldData.value = barcodeToValue matches[choice].barcode
 			fieldData.confidence = 100
 			fieldData.box = matches[choice].barcode.box
-			fieldData.conflicts = if matches[choice].paths.length > 1 then matches[choice].paths else []
+			fieldData.conflicts = matches[choice].paths.filter (path) -> path isnt field.path
 		else
 			fieldData = unpack formData, field.path
 			fieldData.confidence = 100
