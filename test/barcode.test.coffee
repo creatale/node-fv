@@ -117,21 +117,21 @@ describe 'Barcode recognizer', ->
 			matchBarcodes(formData, createFormSchema('ITF', 'PDF_417'), barcodes, schemaToPage)
 			formData.one.confidence.should.equal 100
 			formData.one.value.data.should.equal barcodes[0].data
-			formData.one.box.should.equal barcodes[0].box
+			formData.one.box.should.deep.equal barcodes[0].box
 			formData.one.conflicts.should.have.length 0
 			should.exist(formData.two)
 
-		it 'should match 1 barcode to "one" and "two" with low conflicts', ->
+		it 'should match 1 barcode to "one" and "two" with conflicts', ->
 			formData = {}
 			barcodes = createBarcodes 'ITF', 'DATA_MATRIX'
 			matchBarcodes(formData, createFormSchema('ITF', 'ITF'), barcodes, schemaToPage)
 			formData.one.confidence.should.equal 100
 			formData.one.value.data.should.equal(barcodes[0].data)
-			formData.one.box.should.equal(barcodes[0].box)
+			formData.one.box.should.deep.equal(barcodes[0].box)
 			formData.one.conflicts.should.have.length 1
 			formData.two.confidence.should.equal 100
 			formData.two.value.data.should.equal(barcodes[0].data)
-			formData.two.box.should.equal(barcodes[0].box)
+			formData.two.box.should.deep.equal(barcodes[0].box)
 			formData.two.conflicts.should.have.length 1
 			
 		it 'should match 2 barcodes to "one" using field selector', ->
@@ -167,10 +167,10 @@ describe 'Barcode recognizer', ->
 			matchBarcodes(formData, createFormSchema('ITF', 'DATA_MATRIX'), barcodes, schemaToPage)
 			formData.one.confidence.should.equal 100
 			formData.one.value.data.should.equal(barcodes[0].data)
-			formData.one.box.should.equal(barcodes[0].box)
+			formData.one.box.should.deep.equal(barcodes[0].box)
 			formData.one.conflicts.should.have.length 0
 			formData.two.confidence.should.equal 100
 			formData.two.value.data.should.equal(barcodes[1].data)
-			formData.two.box.should.equal(barcodes[1].box)
+			formData.two.box.should.deep.equal(barcodes[1].box)
 			formData.two.conflicts.should.have.length 0
 			

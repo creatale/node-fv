@@ -69,7 +69,7 @@ describe 'Checkbox recognizer', ->
 			matchCheckboxes formData, formSchema, checkboxes, [], schemaToPage, schemaToData
 			formData.one.confidence.should.equal checkboxes[0].confidence
 			formData.one.value.should.be.true
-			formData.one.box.should.equal checkboxes[0].box
+			formData.one.box.should.deep.equal checkboxes[0].box
 			formData.one.conflicts.should.have.length 0
 			formData.two.confidence.should.be.within 65, 67
 			formData.two.value.should.be.false
@@ -91,7 +91,7 @@ describe 'Checkbox recognizer', ->
 			matchCheckboxes formData, formSchema, [], words, schemaToPage, schemaToData
 			formData.one.confidence.should.equal words[0].confidence
 			formData.one.value.should.equal words[0].text
-			formData.one.box.should.equal words[0].box
+			formData.one.box.should.deep.equal words[0].box
 			formData.one.conflicts.should.have.length 0
 			formData.two.confidence.should.equal 100
 			formData.two.value.should.be.false
