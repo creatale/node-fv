@@ -11,7 +11,6 @@ createFormSchema = (a, b, c) ->
 	that =
 		called: []
 		page: {width: 500, height: 100}
-		words: ['foobar']
 		fields: [
 			path: 'one'
 			type: 'text'
@@ -233,18 +232,6 @@ describe 'Text', ->
 			should.exist(formData.three)
 
 	describe 'by position and validator', ->
-		it 'should ignore schema words', ->
-			formData = {}
-			formSchema = createFormSchema undefined, undefined, undefined
-			[image, words] = createWords 'foobar\n a\nb'
-			matchText(formData, formSchema, words, schemaToPage, image)
-			formData.one.confidence.should.equal 100
-			formData.one.value.should.equal words[1].text
-			formData.one.box.should.deep.equal words[0].box
-			formData.one.conflicts.should.have.length 0
-			should.exist(formData.two)
-			should.exist(formData.three)
-
 		it 'should match words to fields, no anchors', ->
 			formData = {}
 			formSchema = createFormSchema undefined, 'b100', undefined
