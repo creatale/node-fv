@@ -97,6 +97,7 @@ matchByMark = (formData, fields, marks, schemaToPage) ->
 #
 # This process is content- and location-sensitive. Short words are preferred over marks.
 # XXX: false negatives are to be expected when words are invalidated!
+# XXX: do not use word confidence as checkbox confidence!
 module.exports.matchCheckboxes = (formData, formSchema, marks, words, schemaToPage, schemaToData) ->
 	checkboxFields = formSchema.fields.filter((field) -> field.type is 'checkbox')
 	assignedFields = matchByWords formData, checkboxFields, words, schemaToPage, schemaToData
