@@ -84,10 +84,7 @@ wordsToText = (words, extendedGapDetection = false) ->
 
 # Compute confidence from words.
 wordsToConfidence = (words) ->
-	result = 100
-	for {confidence} in words
-		result = Math.min result, confidence
-	return Math.floor result
+	return words.reduce(((sum, word) -> sum + word.confidence), 0) / words.length
 
 # Compute confidence from pixels inside box.
 boxToConfidence = (box, image) ->
@@ -108,7 +105,7 @@ boxToConfidence = (box, image) ->
 		return 0
 
 # Find anchor words (unique matches).
-findAnchors = (textFields, words) ->
+findAnchors = (textFields, words, schemaToPage) ->
 	anchors = []
 	anchorFields = []
 	anchorWords = []
@@ -131,14 +128,14 @@ findAnchors = (textFields, words) ->
 				continue
 
 			# Safeguard: Disregard matches that are too far off
-			fieldpageBox = schemaToPage textField.box
-			continue if Math.abs(word.box.x - fieldpageBox.x) + Math.abs(word.box.y - fieldpageBox.y) > 400
+			pageBox = schemaToPage textField.box
+			continue if Math.abs(word.box.x - pageBox.x) + Math.abs(word.box.y - pageBox.y) > 400
 			#console.log 'Unique match:', textField, word
 			anchor =
 				acceptedBy: textField.path
 				offset:
-					x: fieldpageBox.x - word.box.x
-					y: fieldpageBox.y - word.box.y
+					x: pageBox.x - word.box.x
+					y: pageBox.y - word.box.y
 				word: word
 			anchors.push anchor
 			anchorWords.push word
@@ -164,10 +161,12 @@ findVariants = (field, anchors, words, schemaToPage) ->
 	if closestAnchor?
 		pageBox.x -= closestAnchor.offset.x
 		pageBox.y -= closestAnchor.offset.y
+
+	wordsByPage = findTwoClosestWords pageBox, words
 	
 	# Build some box variants of an enclosing box in order of importance.
 	boxVariants = [pageBox]
-	for word in findTwoClosestWords pageBox, words
+	for word in wordsByPage
 		boxVariants.push
 			x: word.box.x
 			y: word.box.y
@@ -218,8 +217,8 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 	image = rawImage.toGray()
 
 	# Find anchors to compensate for *very* inaccurate printing.
-	anchors = findAnchors textFields, words
-	nonAnchorWords = words.filter (word) -> anchors.some (anchor) -> anchor.word is word
+	anchors = findAnchors textFields, words, schemaToPage
+	nonAnchorWords = words.filter (word) -> not anchors.some (anchor) -> anchor.word is word
 
 	matches = []
 	wordUsage = []
@@ -227,25 +226,28 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 	# Map to matches and usage.
 	for field, fieldIndex in textFields
 		variants = findVariants field, anchors, nonAnchorWords, schemaToPage
-		for match in variants
-			for word in match.words
-				wordIndex = nonAnchorWords.indexOf word
-				wordUsage[wordIndex] ?= []
-				wordUsage[wordIndex].push field.path
-		matches[fieldIndex] = variants
-
-	# Reduce to fields.
-	for field, fieldIndex in textFields
-		variants = matches[fieldIndex]
 
 		if variants.length > 1 and field.fieldSelector?
-			values = matches.map (match) -> match.text
+			values = variants.map (variant) -> variant.text
 			choice = field.fieldSelector values
 			if choice not of values
 				throw new Error('Returned choice index out of bounds')
 		else
 			choice = 0
 
+		for word in variants[choice].words
+			wordIndex = nonAnchorWords.indexOf word
+			wordUsage[wordIndex] ?= []
+			wordUsage[wordIndex].push field.path
+
+		matches[fieldIndex] =
+			variants: variants
+			choice: choice
+
+	# Reduce to fields.
+	for field, fieldIndex in textFields
+		variants = matches[fieldIndex].variants
+		choice = matches[fieldIndex].choice
 		chosenVariant = variants[choice]
 
 		# Compute confidence.

@@ -7,40 +7,42 @@ fs = require 'fs'
 {matchText} = require '../src/match_text'
 
 createFormSchema = (a, b, c) ->
-	page: {width: 200, height: 100}
-	words: []
-	fields: [
-		path: 'one'
-		type: 'text'
-		box:
-			x: 0
-			y: 0
-			width: 200
-			height: 50
-		fieldValidator: (value) -> if not a? then true else value is a
-		fieldSelector: (choices) ->
-			choice = choices[0]
-			choice.foobar = true
-			return choices
-	,
-		path: 'two'
-		type: 'text'
-		box:
-			x: 0
-			y: 50
-			width: 100
-			height: 50
-		fieldValidator: if not b? then null else (value) -> value is b
-	,
-		path: 'three'
-		type: 'text'
-		box:
-			x: 0
-			y: 50
-			width: 100
-			height: 50
-		fieldValidator: if not c? then null else (value) -> value is c
-	]
+	that =
+		called: []
+		page: {width: 200, height: 100}
+		words: []
+		fields: [
+			path: 'one'
+			type: 'text'
+			box:
+				x: 0
+				y: 0
+				width: 200
+				height: 50
+			fieldValidator: (value) -> if not a? then true else value is a
+			fieldSelector: (choices) ->
+				that.called.push 'one'
+				return 0
+		,
+			path: 'two'
+			type: 'text'
+			box:
+				x: 0
+				y: 50
+				width: 100
+				height: 50
+			fieldValidator: if not b? then null else (value) -> value is b
+		,
+			path: 'three'
+			type: 'text'
+			box:
+				x: 0
+				y: 50
+				width: 100
+				height: 50
+			fieldValidator: if not c? then null else (value) -> value is c
+		]
+	return that
 
 createWords = (text) ->
 	words = []
@@ -49,20 +51,22 @@ createWords = (text) ->
 	for line, lineIndex in text.split('\n')
 		offset = 0
 		for fragment, fragmentIndex in line.split(' ')
-			if fragment isnt ''
-				offset += fragment.length * 10
-			else
+			if fragment.length isnt 0
+				x = Math.min(image.width, offset)
+				y = Math.min(image.height, lineIndex * 25 + ((fragmentIndex * 3) % 7))
 				words.push word =
 					box:
-						x: offset
-						y: lineIndex * 25 + ((fragmentIndex * 3) % 7)
-						width: fragment.length * 10
-						height: 20
+						x: x
+						y: y
+						width: Math.min(image.width - x, fragment.length * 10)
+						height: Math.min(image.height - y, 20)
 					text: fragment
 					confidence: Number(fragment.match(/\d+$/)?[0] ? 50)
 				grayLevel = ((1.0 - word.confidence / 100) * 255 | 0)
-				try image.fillBox word.box, grayLevel, grayLevel, grayLevel
+				image.fillBox word.box, grayLevel, grayLevel, grayLevel
 				offset += fragment.length * 10 + (lineIndex % 3)
+			else
+				offset += 10
 	return [image, words]
 
 schemaToPage = ({x, y, width, height}) -> {x, y, width, height}
@@ -112,11 +116,12 @@ describe 'Text recognizer', ->
 			formSchema = createFormSchema undefined, undefined, undefined
 			[image, words] = createWords 'a100\n\n\nx100'
 			matchText(formData, formSchema, words, schemaToPage, image)
-			formData.one.confidence.should.equal 100
+			formData.one.confidence.should.equal words[0].confidence
 			formData.one.value.should.equal words[0].text
-			formData.one.box.should.equal words[0].box
-			should.not.exist(formData.two)
-			should.not.exist(formData.three)
+			formData.one.box.should.deep.equal words[0].box
+			formData.one.conflicts.should.have.length 0
+			should.exist(formData.two)
+			should.exist(formData.three)
 
 		it 'should match 2 words to "one" with mean confidence', ->
 			formData = {}
@@ -125,25 +130,13 @@ describe 'Text recognizer', ->
 			matchText(formData, formSchema, words, schemaToPage, image)
 			formData.one.confidence.should.equal 63
 			formData.one.value.should.equal words[0].text + ' ' + words[1].text
-			formData.one.box.should.equal boundingBox([words[0].box, words[1].box])
-			should.not.exist(formData.two)
-			should.not.exist(formData.three)
-			
-		it 'should match 1 word to "one", 1 word to "two" and one word to "three"', ->
-			formData = {}
-			formSchema = createFormSchema undefined, undefined, undefined
-			[image, words] = createWords 'a100\nb100      c100'
-			matchText(formData, formSchema, words, schemaToPage, image)
-			formData.one.confidence.should.equal 100
-			formData.one.value.should.equal words[0].text
-			formData.one.box.should.equal words[0].box
-			formData.two.confidence.should.equal 100
-			formData.two.value.should.equal words[1].text
-			formData.two.box.should.equal words[1].box
-			formData.three.confidence.should.equal 100
-			formData.three.value.should.equal words[2].text
-			formData.three.box.should.equal words[2].box
+			formData.one.box.should.deep.equal boundingBox([words[0].box, words[1].box])
+			formData.one.conflicts.should.have.length 0
+			should.exist(formData.two)
+			should.exist(formData.three)
 
+		#XXX: test field selector / conflicts.
+			
 	describe 'match by validator', ->
 		it 'should match 1 word to "one" and drop others', ->
 			formData = {}
@@ -152,9 +145,10 @@ describe 'Text recognizer', ->
 			matchText(formData, formSchema, words, schemaToPage, image)
 			formData.one.confidence.should.equal 100
 			formData.one.value.should.equal words[0].text
-			formData.one.box.should.equal words[0].box
-			should.not.exist(formData.two)
-			should.not.exist(formData.three)
+			formData.one.box.should.deep.equal words[0].box
+			formData.one.conflicts.should.have.length 0
+			should.exist(formData.two)
+			should.exist(formData.three)
 
 		it 'should match 2 words to "one" with mean confidence', ->
 			formData = {}
@@ -163,105 +157,87 @@ describe 'Text recognizer', ->
 			matchText(formData, formSchema, words, schemaToPage, image)
 			formData.one.confidence.should.equal 63
 			formData.one.value.should.equal words[0].text + ' ' + words[1].text
-			formData.one.box.should.equal boundingBox([words[0].box, words[1].box])
-			should.not.exist(formData.two)
-			should.not.exist(formData.three)
+			formData.one.box.should.deep.equal boundingBox([words[0].box, words[1].box])
+			formData.one.conflicts.should.have.length 0
+			should.exist(formData.two)
+			should.exist(formData.three)
 
-		it 'should match 1 word to "one" and "two" with low confidence', ->
-			#XXX: define this, once fieldSelection semantics are ready.
-			should.exist(null)
-
-		it 'should match 2 words to "one" and "two" with low confidence', ->
-			# e.g. 'a100 a100' isnt valid, but ['a100', 'a100'] is.
-			#XXX: define this, once fieldSelection semantics are ready.
-			should.exist(null)
-
-		it 'should match 2 words to "one" and "two" and with low confidence', ->
-			#XXX: define this, once fieldSelection semantics are ready.
-			should.exist(null)
-
-		it 'should match 1 word to "one", 1 word to "two" and one word to "three"', ->
-			formData = {}
-			formSchema = createFormSchema 'a100', 'b100', 'c100'
-			[image, words] = createWords 'z100\na100\nb100 c100'
-			matchText(formData, formSchema, words, schemaToPage, image)
-			formData.one.confidence.should.equal 100
-			formData.one.value.should.equal words[0].text
-			formData.one.box.should.equal words[0].box
-			formData.two.confidence.should.equal 100
-			formData.two.value.should.equal words[1].text
-			formData.two.box.should.equal words[1].box
-			formData.three.confidence.should.equal 100
-			formData.three.value.should.equal words[2].text
-			formData.three.box.should.equal words[2].box
+		#XXX: test field selector / conflicts.
 
 	describe 'match by position and validator', ->
-		it 'should match 1 word to "one", 1 word to "two" and one word to "three" (1)', ->
-			formData = {}
-			formSchema = createFormSchema undefined, 'b100', undefined
-			[image, words] = createWords 'z100\na100\nb100      c100'
-			matchText(formData, formSchema, words, schemaToPage, image)
-			formData.one.confidence.should.equal 100
-			formData.one.value.should.equal words[0].text
-			formData.one.box.should.equal words[0].box
-			formData.two.confidence.should.equal 100
-			formData.two.value.should.equal words[1].text
-			formData.two.box.should.equal words[1].box
-			formData.three.confidence.should.equal 100
-			formData.three.value.should.equal words[2].text
-			formData.three.box.should.equal words[2].box
-
-		it 'should match 1 word to "one", 1 word to "two" and one word to "three" (2)', ->
-			formData = {}
-			formSchema = createFormSchema undefined, 'b100', 'c100'
-			[image, words] = createWords 'z100\na100\nb100 c100'
-			matchText(formData, formSchema, words, schemaToPage, image)
-			formData.one.confidence.should.equal 100
-			formData.one.value.should.equal words[0].text
-			formData.one.box.should.equal words[0].box
-			formData.two.confidence.should.equal 100
-			formData.two.value.should.equal words[1].text
-			formData.two.box.should.equal words[1].box
-			formData.three.confidence.should.equal 100
-			formData.three.value.should.equal words[2].text
-			formData.three.box.should.equal words[2].box
-
-		it 'should match 1 word to "one", 1 word to "two" and one word to "three" (3)', ->
+		it 'should match words to each field without anchors', ->
 			formData = {}
 			formSchema = createFormSchema undefined, 'b100', undefined
 			[image, words] = createWords 'a100\nx100 c100'
 			matchText(formData, formSchema, words, schemaToPage, image)
 			formData.one.confidence.should.equal 100
 			formData.one.value.should.equal words[0].text
-			formData.one.box.should.equal words[0].box
+			formData.one.box.should.deep.equal words[0].box
+			formData.one.conflicts.should.have.length 0
 			formData.two.confidence.should.equal 100
 			formData.two.value.should.equal words[1].text
-			formData.two.box.should.equal words[1].box
+			formData.two.box.should.deep.equal words[1].box
+			formData.two.conflicts.should.have.length 0
 			formData.three.confidence.should.equal 100
 			formData.three.value.should.equal words[2].text
-			formData.three.box.should.equal words[2].box
+			formData.three.box.should.deep.equal words[2].box
+			formData.three.conflicts.should.have.length 0
 
-	describe 'verify emptiness', ->
-		it 'should match cluttered empty to "one" with low confidence', ->
+		it 'should match words to each field using one anchor', ->
+			formData = {}
+			formSchema = createFormSchema undefined, 'b100', undefined
+			[image, words] = createWords 'z100\na100\nb100      c100'
+			matchText(formData, formSchema, words, schemaToPage, image)
+			formData.one.confidence.should.equal 100
+			formData.one.value.should.equal words[0].text
+			formData.one.box.should.deep.equal words[0].box
+			formData.one.conflicts.should.have.length 0
+			formData.two.confidence.should.equal 100
+			formData.two.value.should.equal words[1].text
+			formData.two.box.should.deep.equal words[1].box
+			formData.two.conflicts.should.have.length 0
+			formData.three.confidence.should.equal 100
+			formData.three.value.should.equal words[2].text
+			formData.three.box.should.deep.equal words[2].box
+			formData.three.conflicts.should.have.length 0
+
+		it 'should match words to each field using two anchors', ->
+			formData = {}
+			formSchema = createFormSchema undefined, 'b100', 'c100'
+			[image, words] = createWords 'z100\na100\nb100 c100'
+			matchText(formData, formSchema, words, schemaToPage, image)
+			formData.one.confidence.should.equal 100
+			formData.one.value.should.equal words[0].text
+			formData.one.box.should.deep.equal words[0].box
+			formData.one.conflicts.should.have.length 0
+			formData.two.confidence.should.equal 100
+			formData.two.value.should.equal words[1].text
+			formData.two.box.should.deep.equal words[1].box
+			formData.two.conflicts.should.have.length 0
+			formData.three.confidence.should.equal 100
+			formData.three.value.should.equal words[2].text
+			formData.three.box.should.deep.equal words[2].box
+			formData.three.conflicts.should.have.length 0
+
+	describe 'verify', ->
+		it 'should verify clean pixels with high confidence for "one"', ->
+			formData = {}
+			formSchema = createFormSchema undefined, undefined, undefined
+			[image, words] = createWords ''
+			matchText(formData, formSchema, [], schemaToPage, image)
+			formData.one.confidence.should.equal 100
+			formData.one.value.should.equal ''
+			formData.one.conflicts.should.have.length 0
+			should.exist formData.two
+			should.exist formData.three
+
+		it 'should verify cluttered pixels with low confidence for "one"', ->
 			formData = {}
 			formSchema = createFormSchema undefined, undefined, undefined
 			[image, words] = createWords 'abcdefghikjlmnopqrst\nabcdefghikjlmnopqrst'
 			matchText(formData, formSchema, [], schemaToPage, image)
 			formData.one.confidence.should.equal 0
 			formData.one.value.should.equal ''
-			formData.two.confidence.should.equal 0
-			formData.two.value.should.equal ''
-			formData.three.confidence.should.equal 0
-			formData.three.value.should.equal ''
-
-		it 'should match clean empty to "one" with high confidence', ->
-			formData = {}
-			formSchema = createFormSchema undefined, undefined, undefined
-			[image, words] = createWords ''
-			matchText(formData, formSchema, words, schemaToPage, image)
-			formData.one.confidence.should.equal 100
-			formData.one.value.should.equal ''
-			formData.one.confidence.should.equal 100
-			formData.two.value.should.equal ''
-			formData.one.confidence.should.equal 100
-			formData.three.value.should.equal ''
+			formData.one.conflicts.should.have.length 0
+			should.exist formData.two
+			should.exist formData.three
