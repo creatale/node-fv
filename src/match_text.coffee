@@ -1,5 +1,43 @@
 unpack = require './unpack'
-{boundingBox, length} = require './math'
+{distance, length, boundingBox} = require './math'
+
+# Find anchor words (unique matches).
+findAnchors = (textFields, words, schemaToPage) ->
+	anchors = []
+	anchorFields = []
+	anchorWords = []
+	for textField, fieldIndex in textFields
+		matches = []
+		for word, wordIndex in words when word.text.length > 0
+			if not textField.fieldValidator? or textField.fieldValidator(word.text)
+				matches.push wordIndex
+		if matches.length is 1
+			word = words[matches[0]]
+			if word in anchorWords
+				# Uniqueness check failed: This is at least the second field subscribing to `word`.
+				# Pull the existing one from anchors and skip this one completely.
+				#console.log 'Duplicate subscription on', word.text
+				for anchor, index in anchors
+					if anchor.word is word
+						anchors.splice index, 1
+						anchorFields.splice index, 1
+						break
+				continue
+
+			# Safeguard: Disregard matches that are too far off
+			pageBox = schemaToPage textField.box
+			continue if Math.abs(word.box.x - pageBox.x) + Math.abs(word.box.y - pageBox.y) > 400
+			#console.log 'Unique match:', textField, word
+			anchor =
+				acceptedBy: textField.path
+				offset:
+					x: pageBox.x - word.box.x
+					y: pageBox.y - word.box.y
+				word: word
+			anchors.push anchor
+			anchorWords.push word
+
+	return anchors
 
 # Find close words in a box.
 findTwoClosestWords = (pageBox, words) ->
@@ -42,8 +80,6 @@ estimateSymbolWidth = (word) ->
 	
 # Convert words in random order to a single block of text.
 wordsToText = (words, extendedGapDetection = false) ->
-	return '' if words.length is 0
-
 	# Extract lines from Y difference peaks.
 	lines = [[]]
 	lastWord = words[0]
@@ -82,6 +118,17 @@ wordsToText = (words, extendedGapDetection = false) ->
 
 	return text
 
+# Find closest anchor.
+findClosestAnchor = (anchors, pageBox) ->
+	minDistance = Infinity
+	closest = null
+	for anchor in anchors
+		dist = Math.abs(anchor.word.box.x - pageBox.x) + Math.abs(anchor.word.box.y - pageBox.y)
+		if dist < minDistance
+			minDistance = dist
+			closest = anchor
+	return closest
+
 # Compute confidence from words.
 wordsToConfidence = (words) ->
 	return words.reduce(((sum, word) -> sum + word.confidence), 0) / words.length
@@ -97,61 +144,16 @@ boxToConfidence = (box, image) ->
 		width: Math.max(0, Math.min(image.width - x, box.width))
 		height: Math.max(0, Math.min(image.height - y, box.height))
 	return 50 if areaBox.width is 0 or areaBox.height is 0
-	# Search for pixel blobs and compute confidence from cleanliness.
+	# Search for pixel blobs and compute confidence from white pixels.
 	areaImage = image.crop(areaBox).dilate(3, 5).threshold(220)
-	return Math.round(areaImage.histogram()[0] * 100)
-
-# Find anchor words (unique matches).
-findAnchors = (textFields, words, schemaToPage) ->
-	anchors = []
-	anchorFields = []
-	anchorWords = []
-	for textField, fieldIndex in textFields
-		matches = []
-		for word, wordIndex in words when word.text.length > 0
-			if not textField.fieldValidator? or textField.fieldValidator(word.text)
-				matches.push wordIndex
-		if matches.length is 1
-			word = words[matches[0]]
-			if word in anchorWords
-				# Uniqueness check failed: This is at least the second field subscribing to `word`.
-				# Pull the existing one from anchors and skip this one completely.
-				#console.log 'Duplicate subscription on', word.text
-				for anchor, index in anchors
-					if anchor.word is word
-						anchors.splice index, 1
-						anchorFields.splice index, 1
-						break
-				continue
-
-			# Safeguard: Disregard matches that are too far off
-			pageBox = schemaToPage textField.box
-			continue if Math.abs(word.box.x - pageBox.x) + Math.abs(word.box.y - pageBox.y) > 400
-			#console.log 'Unique match:', textField, word
-			anchor =
-				acceptedBy: textField.path
-				offset:
-					x: pageBox.x - word.box.x
-					y: pageBox.y - word.box.y
-				word: word
-			anchors.push anchor
-			anchorWords.push word
-
-	return anchors
-
-# Find closest anchor.
-findClosestAnchor = (anchors, pageBox) ->
-	minDistance = Infinity
-	closest = null
-	for anchor in anchors
-		dist = Math.abs(anchor.word.box.x - pageBox.x) + Math.abs(anchor.word.box.y - pageBox.y)
-		if dist < minDistance
-			minDistance = dist
-			closest = anchor
-	return closest
+	whiteness = areaImage.histogram()[0]
+	if whiteness >= 0.9
+		return Math.round((whiteness - 0.9) * 1000)
+	else
+		return 0
 
 # Find validating text variants.
-findVariants = (field, anchors, words, schemaToPage) ->
+findVariants = (field, anchors, words, schemaToPage, image) ->
 	pageBox = schemaToPage field.box
 
 	closestAnchor = findClosestAnchor anchors, pageBox
@@ -159,50 +161,50 @@ findVariants = (field, anchors, words, schemaToPage) ->
 		pageBox.x -= closestAnchor.offset.x
 		pageBox.y -= closestAnchor.offset.y
 
-	wordsByPage = findTwoClosestWords pageBox, words
+	closeWords = findTwoClosestWords pageBox, words
 	
-	# Build some box variants of an enclosing box in order of importance.
-	boxVariants = [pageBox]
-	for word in wordsByPage
-		boxVariants.push
+	# Generate search boxes.
+	searchBoxes = [pageBox]
+	for word in closeWords
+		searchBoxes.push
 			x: word.box.x
 			y: word.box.y
 			width: pageBox.width
 			height: pageBox.height
-		boxVariants.push
+		searchBoxes.push
 			x: word.box.x
 			y: word.box.y
 			width: pageBox.width * 0.9
 			height: pageBox.height * 0.9
-		boxVariants.push
+		searchBoxes.push
 			x: word.box.x
 			y: word.box.y
 			width: pageBox.width * 1.1
 			height: pageBox.height * 1.1
 
-	# Interpret available words using box variants.
+	# Map words to variants using search boxes.
 	variants = []
-	for box in boxVariants
+	for box in searchBoxes
 		candidateWords = selectWords words, box
-		candidateText = wordsToText candidateWords, field.extendedGapDetection
-		isDuplicate = variants.some (variant) -> variant.text is candidateText
-		isValid = not field.fieldValidator? or field.fieldValidator(candidateText)
-		if not isDuplicate and isValid
-			if candidateWords.length > 0
-				candidateBox = boundingBox (word.box for word in candidateWords)
-			else
-				candidateBox = box
-			variants.push
-				box: candidateBox
-				text: candidateText
-				words: candidateWords
+		if candidateWords.length > 0
+			candidateText = wordsToText candidateWords, field.extendedGapDetection
+			isDuplicate = variants.some (variant) -> variant.text is candidateText
+			isValid = not field.fieldValidator? or field.fieldValidator(candidateText)
+			if not isDuplicate and isValid
+				variants.push
+					confidence: wordsToConfidence candidateWords
+					box: boundingBox (word.box for word in candidateWords)
+					text: candidateText
+					words: candidateWords
 
-	# Ensure at least one variant is returned.
-	if variants.length is 0
-		variants.push
-			box: pageBox
-			text: ''
-			words: []
+	# Insert epsilon variant when confident or nothing else was found.
+	epsilonVariant = 
+		confidence: boxToConfidence pageBox, image
+		box: pageBox
+		text: ''
+		words: []
+	if epsilonVariant?.confidence > 0 or variants.length is 0
+		variants.unshift epsilonVariant
 
 	return variants
 
@@ -215,14 +217,13 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 
 	# Find anchors to compensate for *very* inaccurate printing.
 	anchors = findAnchors textFields, words, schemaToPage
-	nonAnchorWords = words.filter (word) -> not anchors.some (anchor) -> anchor.word is word
 
 	matches = []
 	wordUsage = []
 
 	# Map to matches and usage.
 	for field, fieldIndex in textFields
-		variants = findVariants field, anchors, nonAnchorWords, schemaToPage
+		variants = findVariants field, anchors, words, schemaToPage, image
 
 		if variants.length > 1 and field.fieldSelector?
 			values = variants.map (variant) -> variant.text
@@ -233,7 +234,8 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 			choice = 0
 
 		for word in variants[choice].words
-			wordIndex = nonAnchorWords.indexOf word
+			wordIndex = words.indexOf word
+			continue if wordIndex is -1
 			wordUsage[wordIndex] ?= []
 			wordUsage[wordIndex].push field.path
 
@@ -241,29 +243,25 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 			variants: variants
 			choice: choice
 
+	#XXX: resolve silly conflicts using priorities
+	# [validated epsilon >] validated content > confident epsilon > positional content > unconfident epsilon
+
 	# Reduce to fields.
 	for field, fieldIndex in textFields
 		variants = matches[fieldIndex].variants
 		choice = matches[fieldIndex].choice
 		chosenVariant = variants[choice]
-
-		# Compute confidence.
-		if chosenVariant.words.length > 0
-			confidence = wordsToConfidence chosenVariant.words
-		else
-			confidence = boxToConfidence chosenVariant.box, image
-
 		# Compute conflicts.
 		conflicts = []
 		for word in chosenVariant.words
-			wordIndex = nonAnchorWords.indexOf word
+			wordIndex = words.indexOf word
 			for path in wordUsage[wordIndex] when path not in conflicts
 				conflicts.push path
 
 		# Assign variant to field.
 		fieldData = unpack formData, field.path
 		fieldData.value = chosenVariant.text
-		fieldData.confidence = confidence
+		fieldData.confidence = chosenVariant.confidence
 		fieldData.box = chosenVariant.box
 		fieldData.conflicts = conflicts.filter (path) -> path isnt field.path
 
