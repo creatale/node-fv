@@ -88,21 +88,18 @@ wordsToConfidence = (words) ->
 
 # Compute confidence from pixels inside box.
 boxToConfidence = (box, image) ->
-	# Text allegedly empty; look whether there are any letter-sized blobs in actual image
-	unless box? and 0 < box.y < image.height and 0 < box.x < image.width
-		# Sanity check: Box is undefined or off-paper. TODO warning?
-		return 0
-	cropped = image.crop box.x - 5, box.y - 5, box.width + 10, box.height + 10
-	processed = cropped.dilate(3, 5).threshold(220)
-	blobs = (component for component in processed.connectedComponents(8) when component.width > 8 and component.height > 14)
-	if blobs.length is 0
-		return 100
-	else if blobs.length is 1
-		return 70
-	else if blobs.length is 2
-		return 30
-	else
-		return 0
+	# Sanitize box to image.
+	x = Math.max(0, Math.min(image.width - 1, box.x))
+	y = Math.max(0, Math.min(image.height - 1, box.y))
+	areaBox =
+		x: x
+		y: y
+		width: Math.max(0, Math.min(image.width - x, box.width))
+		height: Math.max(0, Math.min(image.height - y, box.height))
+	return 50 if areaBox.width is 0 or areaBox.height is 0
+	# Search for pixel blobs and compute confidence from cleanliness.
+	areaImage = image.crop(areaBox).dilate(3, 5).threshold(220)
+	return Math.round(areaImage.histogram()[0] * 100)
 
 # Find anchor words (unique matches).
 findAnchors = (textFields, words, schemaToPage) ->
