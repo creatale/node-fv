@@ -152,7 +152,8 @@ boxToConfidence = (box, image) ->
 	else
 		return 0
 
-# Find validating text variants.
+# Find text variants and assign a priority:
+#   valid content > confident epsilon > positional content > unconfident epsilon
 findVariants = (field, anchors, words, schemaToPage, image) ->
 	pageBox = schemaToPage field.box
 
@@ -189,24 +190,44 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 		if candidateWords.length > 0
 			candidateText = wordsToText candidateWords, field.extendedGapDetection
 			isDuplicate = variants.some (variant) -> variant.text is candidateText
-			isValid = not field.fieldValidator? or field.fieldValidator(candidateText)
+			isPositional = not field.fieldValidator?
+			isValid = isPositional or field.fieldValidator(candidateText)
 			if not isDuplicate and isValid
 				variants.push
+					path: field.path
 					confidence: wordsToConfidence candidateWords
 					box: boundingBox (word.box for word in candidateWords)
 					text: candidateText
 					words: candidateWords
+					priority: if not isPositional then 3 else 1
 
 	# Insert epsilon variant when confident or nothing else was found.
+	epsilonConfidence = boxToConfidence pageBox, image
 	epsilonVariant = 
-		confidence: boxToConfidence pageBox, image
+		path: field.path
+		confidence: epsilonConfidence
 		box: pageBox
 		text: ''
 		words: []
+		priority: if epsilonConfidence > 0 then 2 else 0
 	if epsilonVariant?.confidence > 0 or variants.length is 0
-		variants.unshift epsilonVariant
+		variants.push epsilonVariant
 
 	return variants
+
+# Filter variants and thus reduce conflicts.
+filterVariants = (variantsByPath, variantsByWord) ->
+	# Drop low priority variants, when high priority variants are available.
+	for _, wordVariants of variantsByWord
+		for wordVariant in wordVariants[..]
+			pathVariants = variantsByPath[wordVariant.path]
+			hasOtherChoices = pathVariants.some (pathVariant) -> pathVariant.priority > wordVariant.priority
+			if hasOtherChoices
+				#console.log 'Pruned:', wordVariant.path, wordVariant.text
+				pathIndex = pathVariants.indexOf(wordVariant)
+				pathVariants.splice(pathIndex, 1) if pathIndex isnt -1
+				wordVariants.splice(wordVariants.indexOf(wordVariant), 1)
+	return
 
 # Match text to form schema.
 #
@@ -218,13 +239,25 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 	# Find anchors to compensate for *very* inaccurate printing.
 	anchors = findAnchors textFields, words, schemaToPage
 
-	matches = []
-	wordUsage = []
-
-	# Map to matches and usage.
-	for field, fieldIndex in textFields
+	# Map words to variants.
+	variantsByPath = {}
+	variantsByWord = {}
+	for field in textFields
 		variants = findVariants field, anchors, words, schemaToPage, image
+		variantsByPath[field.path] = variants
+		for variant in variants
+			for word in variant.words
+				wordIndex = words.indexOf word
+				variantsByWord[wordIndex] ?= []
+				variantsByWord[wordIndex].push variant
 
+	# Filter variants.
+	filterVariants variantsByPath, variantsByWord
+
+	# Reduce to fields.
+	for field in textFields
+		variants = variantsByPath[field.path]
+		# Choose variant.
 		if variants.length > 1 and field.fieldSelector?
 			values = variants.map (variant) -> variant.text
 			choice = field.fieldSelector values
@@ -232,37 +265,19 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 				throw new Error('Returned choice index out of bounds')
 		else
 			choice = 0
-
-		for word in variants[choice].words
+		selectedVariant = variants[choice]
+		# Compute conflicting paths.
+		conflicts = [field.path]
+		for word in selectedVariant.words
 			wordIndex = words.indexOf word
-			continue if wordIndex is -1
-			wordUsage[wordIndex] ?= []
-			wordUsage[wordIndex].push field.path
-
-		matches[fieldIndex] =
-			variants: variants
-			choice: choice
-
-	#XXX: resolve silly conflicts using priorities
-	# [validated epsilon >] validated content > confident epsilon > positional content > unconfident epsilon
-
-	# Reduce to fields.
-	for field, fieldIndex in textFields
-		variants = matches[fieldIndex].variants
-		choice = matches[fieldIndex].choice
-		chosenVariant = variants[choice]
-		# Compute conflicts.
-		conflicts = []
-		for word in chosenVariant.words
-			wordIndex = words.indexOf word
-			for path in wordUsage[wordIndex] when path not in conflicts
-				conflicts.push path
-
+			for variant in variantsByWord[wordIndex] when variant.path not in conflicts
+				conflicts.push variant.path
+		conflicts.splice(0, 1)
 		# Assign variant to field.
 		fieldData = unpack formData, field.path
-		fieldData.value = chosenVariant.text
-		fieldData.confidence = chosenVariant.confidence
-		fieldData.box = chosenVariant.box
-		fieldData.conflicts = conflicts.filter (path) -> path isnt field.path
+		fieldData.value = selectedVariant.text
+		fieldData.confidence = selectedVariant.confidence
+		fieldData.box = selectedVariant.box
+		fieldData.conflicts = conflicts
 
 	return {anchors}
