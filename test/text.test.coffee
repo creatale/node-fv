@@ -211,7 +211,8 @@ describe 'Text', ->
 		it 'should match 1 word to "one" and "two" with conflicts', ->
 			formData = {}
 			formSchema = createFormSchema 'a75', 'a75', undefined
-			[image, words] = createWords 'a75\n          '
+			[image, words] = createWords 'a75\nb50\n          '
+			words.splice(1, 1)
 			schemaToPage = createSchemaToPage image
 			matchText(formData, formSchema, words, schemaToPage, image)
 			formData.one.confidence.should.equal words[0].confidence
@@ -237,8 +238,6 @@ describe 'Text', ->
 			formData.one.conflicts.should.have.length 0
 			formData.two.confidence.should.equal 0
 			formData.two.value.should.equal ''
-			#XXX formData.two.box.should.deep.equal words[1].box
-			#XXX formData.two.conflicts.should.have.length 0
 			formData.three.confidence.should.equal 100
 			formData.three.value.should.equal words[2].text
 			formData.three.box.should.deep.equal words[2].box
@@ -247,14 +246,14 @@ describe 'Text', ->
 		it 'should match words to fields using one anchor', ->
 			formData = {}
 			formSchema = createFormSchema undefined, 'b50', undefined
-			[image, words] = createWords 'x100\nb50   y100\n       z100'
+			[image, words] = createWords 'x100\nb50    z100'
 			schemaToPage = createSchemaToPage image
 			matchText(formData, formSchema, words, schemaToPage, image)
 			formData.one.confidence.should.equal 100
 			formData.one.value.should.equal words[0].text
 			formData.one.box.should.deep.equal words[0].box
 			formData.one.conflicts.should.have.length 0
-			formData.two.confidence.should.equal 100
+			formData.two.confidence.should.equal 50
 			formData.two.value.should.equal words[1].text
 			formData.two.box.should.deep.equal words[1].box
 			formData.two.conflicts.should.have.length 0
@@ -270,14 +269,13 @@ describe 'Text', ->
 			schemaToPage = createSchemaToPage image
 			matchText(formData, formSchema, words, schemaToPage, image)
 			formData.one.confidence.should.equal 100
-			formData.one.value.should.equal words[0].text
-			formData.one.box.should.deep.equal words[0].box
+			formData.one.value.should.contain words[0].text
 			formData.one.conflicts.should.have.length 0
-			formData.two.confidence.should.equal 100
-			formData.two.value.should.equal words[1].text
-			formData.two.box.should.deep.equal words[1].box
+			formData.two.confidence.should.equal 50
+			formData.two.value.should.equal words[2].text
+			formData.two.box.should.deep.equal words[2].box
 			formData.two.conflicts.should.have.length 0
-			formData.three.confidence.should.equal 100
-			formData.three.value.should.equal words[2].text
-			formData.three.box.should.deep.equal words[2].box
+			formData.three.confidence.should.equal 25
+			formData.three.value.should.equal words[3].text
+			formData.three.box.should.deep.equal words[3].box
 			formData.three.conflicts.should.have.length 0
