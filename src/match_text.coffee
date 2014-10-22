@@ -131,7 +131,7 @@ findClosestAnchor = (anchors, pageBox) ->
 
 # Compute confidence from words.
 wordsToConfidence = (words) ->
-	return words.reduce(((sum, word) -> sum + word.confidence), 0) / words.length
+	return Math.round(words.reduce(((sum, word) -> sum + word.confidence), 0) / words.length)
 
 # Compute confidence from pixels inside box.
 boxToConfidence = (box, image) ->
