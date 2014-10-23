@@ -261,7 +261,7 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 				variantsByWord[wordIndex].push variant
 
 	# Filter variants.
-	filterVariants variantsByPath, variantsByWord
+	#filterVariants variantsByPath, variantsByWord
 
 	# Reduce to fields.
 	selectedVariants = []
@@ -269,6 +269,7 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 	for field in textFields
 		variants = variantsByPath[field.path]
 		# Choose variant.
+		#console.log field.path, variants.map (variant) -> variant.text
 		if variants.length > 1 and field.fieldSelector?
 			values = variants.map (variant) -> variant.text
 			choice = field.fieldSelector values
