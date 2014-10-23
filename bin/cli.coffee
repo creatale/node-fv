@@ -61,8 +61,8 @@ processImage = (formReader, filename, data) ->
 		result.match formSchema, (err, formData) =>
 			if err?
 				console.error err.message
-				return
-			console.log formData
+				return				
+			console.log JSON.stringify(formData, null, 2)
 	else
 		logFilename = filename.replace(/\.([^\.]+)$/, '.log.$1')
 		fs.writeFile logFilename, result.toImage().toBuffer('png')

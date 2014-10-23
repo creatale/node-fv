@@ -134,7 +134,7 @@ wordsToConfidence = (words) ->
 	return Math.round(words.reduce(((sum, word) -> sum + word.confidence), 0) / words.length)
 
 # Compute confidence from pixels inside box.
-boxToConfidence = (box, image) ->
+pixelsToConfidence = (box, image) ->
 	# Sanitize box to image.
 	x = Math.max(0, Math.min(image.width - 1, box.x))
 	y = Math.max(0, Math.min(image.height - 1, box.y))
@@ -165,28 +165,37 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 	closeWords = findTwoClosestWords pageBox, words
 	
 	# Generate search boxes.
-	searchBoxes = [pageBox]
+	searchBoxes = [
+		x: pageBox.x
+		y: pageBox.y
+		width: pageBox.width
+		height: pageBox.height
+		priority: 2
+	]
 	for word in closeWords
 		searchBoxes.push
 			x: word.box.x
 			y: word.box.y
 			width: pageBox.width
 			height: pageBox.height
+			priority: 1
 		searchBoxes.push
 			x: word.box.x
 			y: word.box.y
 			width: pageBox.width * 0.9
 			height: pageBox.height * 0.9
+			priority: 1
 		searchBoxes.push
 			x: word.box.x
 			y: word.box.y
 			width: pageBox.width * 1.1
 			height: pageBox.height * 1.1
+			priority: 1
 
 	# Map words to variants using search boxes.
 	variants = []
-	for box in searchBoxes
-		candidateWords = selectWords words, box
+	for searchBox in searchBoxes
+		candidateWords = selectWords words, searchBox
 		if candidateWords.length > 0
 			candidateText = wordsToText candidateWords, field.extendedGapDetection
 			isDuplicate = variants.some (variant) -> variant.text is candidateText
@@ -198,19 +207,18 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 					box: boundingBox (word.box for word in candidateWords)
 					text: candidateText
 					words: candidateWords
-					priority: 1
+					priority: searchBox.priority
 
 	# Insert epsilon variant when confident or nothing else was found.
-	epsilonConfidence = boxToConfidence pageBox, image
-	epsilonVariant = 
-		path: field.path
-		confidence: epsilonConfidence
-		box: pageBox
-		text: ''
-		words: []
-		priority: if epsilonConfidence > 0 then 2 else 0
-	if epsilonVariant?.confidence > 0 or variants.length is 0
-		variants.push epsilonVariant
+	epsilonConfidence = pixelsToConfidence pageBox, image
+	if epsilonConfidence > 0 or variants.length is 0
+		variants.push 
+			path: field.path
+			confidence: epsilonConfidence
+			box: pageBox
+			text: ''
+			words: []
+			priority: if epsilonConfidence > 0 then 3 else 0
 
 	return variants
 
@@ -218,7 +226,7 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 filterVariants = (variantsByPath, variantsByWord) ->
 	# Drop low priority variants, when high priority variants are available.
 	for _, wordVariants of variantsByWord
-		for wordVariant in wordVariants[..]
+		for wordVariant in wordVariants[1..]
 			pathVariants = variantsByPath[wordVariant.path]
 			hasOtherChoices = pathVariants.some (pathVariant) -> pathVariant.priority > wordVariant.priority
 			if hasOtherChoices
