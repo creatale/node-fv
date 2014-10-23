@@ -1,0 +1,305 @@
+{
+  "page": {
+    "x": 0,
+    "y": 0,
+    "width": 3592,
+    "height": 5000
+  },
+  "fields": [
+    {
+      "type": "checkbox",
+      "path": "kurativ",
+      "box": {
+        "x": 1584,
+        "y": 254,
+        "width": 96,
+        "height": 91
+      }
+    },
+    {
+      "type": "checkbox",
+      "path": "praeventiv",
+      "box": {
+        "x": 1883,
+        "y": 254,
+        "width": 100,
+        "height": 96
+      }
+    },
+    {
+      "type": "checkbox",
+      "path": "belegaerztlich",
+      "box": {
+        "x": 2287,
+        "y": 254,
+        "width": 96,
+        "height": 96
+      }
+    },
+    {
+      "type": "barcode",
+      "searchRadius": -1,
+      "path": "barcode",
+      "box": {
+        "x": 1592,
+        "y": 424,
+        "width": 906,
+        "height": 328
+      }
+    },
+    {
+      "path": "ausnahmeindikation",
+      "type": "text",
+      "box": {
+        "height": 120,
+        "width": 445,
+        "y": 433,
+        "x": 2598
+      }
+    },
+    {
+      "type": "checkbox",
+      "name": "W",
+      "path": "W",
+      "box": {
+        "x": 3280,
+        "y": 628,
+        "width": 87,
+        "height": 83
+      }
+    },
+    {
+      "type": "checkbox",
+      "name": "M",
+      "path": "M",
+      "box": {
+        "x": 3413,
+        "y": 619,
+        "width": 87,
+        "height": 91
+      }
+    },
+    {
+      "type": "checkbox",
+      "path": "empfaengnis",
+      "box": {
+        "x": 2607,
+        "y": 994,
+        "width": 96,
+        "height": 91
+      }
+    },
+    {
+      "path": "auftrag",
+      "type": "text",
+      "box": {
+        "x": 112,
+        "y": 1937,
+        "width": 2403,
+        "height": 403
+      }
+    },
+    {
+      "path": "probeDatum",
+      "type": "text",
+      "box": {
+        "x": 1576,
+        "y": 973,
+        "width": 950,
+        "height": 112
+      }
+    },
+    {
+      "type": "barcode",
+      "path": "auftragPDF417",
+      "box": {
+        "x": 2590,
+        "y": 1071,
+        "width": 945,
+        "height": 627
+      }
+    },
+    {
+      "type": "user",
+      "path": "auftragMatrix",
+      "box": {
+        "height": 2500,
+        "width": 3592,
+        "y": 2500,
+        "x": 0
+      }
+    },
+    {
+      "type": "checkbox",
+      "path": "unfall",
+      "box": {
+        "height": 87,
+        "width": 91,
+        "y": 253,
+        "x": 2783
+      }
+    },
+    {
+      "path": "versicherungName",
+      "type": "text",
+      "box": {
+        "height": 87,
+        "width": 1064,
+        "y": 108,
+        "x": 125
+      }
+    },
+    {
+      "path": "patientName",
+      "type": "text",
+      "box": {
+        "height": 75,
+        "width": 1050,
+        "y": 253,
+        "x": 125
+      }
+    },
+    {
+      "path": "patientVorname",
+      "type": "text",
+      "box": {
+        "height": 67,
+        "width": 1012,
+        "y": 328,
+        "x": 125
+      }
+    },
+    {
+      "path": "patientGeburtstag",
+      "type": "text",
+      "box": {
+        "height": 67,
+        "width": 336,
+        "y": 332,
+        "x": 1190
+      }
+    },
+    {
+      "path": "patientAdresse",
+      "type": "text",
+      "box": {
+        "height": 141,
+        "width": 1074,
+        "y": 399,
+        "x": 129
+      }
+    },
+    {
+      "path": "versicherungNr",
+      "type": "text",
+      "box": {
+        "height": 83,
+        "width": 358,
+        "y": 603,
+        "x": 129
+      }
+    },
+    {
+      "path": "patientVersichertenNr",
+      "type": "text",
+      "box": {
+        "height": 79,
+        "width": 550,
+        "y": 607,
+        "x": 524
+      }
+    },
+    {
+      "extendedGapDetection": true,
+      "path": "versichertenstatus",
+      "type": "text",
+      "box": {
+        "height": 75,
+        "width": 362,
+        "y": 607,
+        "x": 1121
+      }
+    },
+    {
+      "path": "erstellDatum",
+      "type": "text",
+      "box": {
+        "height": 91,
+        "width": 382,
+        "y": 748,
+        "x": 1112
+      }
+    },
+    {
+      "path": "kundenNr",
+      "type": "text",
+      "box": {
+        "height": 87,
+        "width": 448,
+        "y": 748,
+        "x": 632
+      }
+    },
+    {
+      "path": "bsNr",
+      "type": "text",
+      "box": {
+        "height": 104,
+        "width": 470,
+        "y": 744,
+        "x": 133
+      }
+    },
+    {
+      "type": "checkbox",
+      "path": "eilt",
+      "box": {
+        "height": 87,
+        "width": 104,
+        "y": 1145,
+        "x": 153
+      }
+    },
+    {
+      "path": "befundTel",
+      "type": "text",
+      "box": {
+        "height": 87,
+        "width": 610,
+        "y": 1145,
+        "x": 904
+      }
+    },
+    {
+      "path": "befundFax",
+      "type": "text",
+      "box": {
+        "height": 91,
+        "width": 792,
+        "y": 1145,
+        "x": 1688
+      }
+    },
+    {
+      "path": "karteGueltig",
+      "type": "text",
+      "box": {
+        "x": 1226,
+        "y": 481,
+        "width": 281,
+        "height": 80
+      }
+    }
+  ],
+  "words": [
+    {
+      "box": {
+        "x": 1539,
+        "y": 4955,
+        "width": 236,
+        "height": 32
+      },
+      "text": "Wieden!"
+    }
+  ]
+}

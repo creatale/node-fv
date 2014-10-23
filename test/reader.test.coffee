@@ -7,14 +7,17 @@ FormReader = require '../src/form_reader'
 describe 'FormReader', ->
 	contentImage = null
 
-	before (done) ->
-		contentImage = new dv.Image('png', fs.readFileSync(__dirname + '/data/m10-content.png'))
-		done()
-
-	it 'should read', (done) ->
-		#TODO: NYI.
-		should.exist(null)
-		done()
+	it 'should read M10', (done) ->
+		imagePath = '/data/m10-content.png'
+		schemaPath = '/data/m10-schema.json'
+		formReader = new FormReader 'deu'
+		formReader.image = new dv.Image 'png', fs.readFileSync(__dirname + imagePath)
+		form = formReader.find()
+		form.match JSON.parse(fs.readFileSync(__dirname + schemaPath)), (err, data) ->
+			should.not.exist err
+			data.patientVorname.value.should.equal 'Maria'
+			data.patientName.value.should.equal 'Mustermann'
+			done()
 
 	it 'should find checkbox between boxes with low confidence', (done) ->
 		imagePath = '/data/lonely-checkboxes.png'
@@ -41,11 +44,10 @@ describe 'FormReader', ->
 					height: 60
 			]
 		formReader = new FormReader 'eng'
-		image = new dv.Image 'png', fs.readFileSync __dirname + imagePath
-		formReader.image = image
+		formReader.image = new dv.Image 'png', fs.readFileSync(__dirname + imagePath)
 		form = formReader.find()
 		form.match schema, (err, data) ->
-			data.checkbox_YAY.confidence.should.be.within(30,70)
-			data.checkbox_NAY.confidence.should.be.within(30,70)
+			should.not.exist err
+			data.checkbox_YAY.confidence.should.be.within(30, 70)
+			data.checkbox_NAY.confidence.should.be.within(30, 70)
 			done()
-

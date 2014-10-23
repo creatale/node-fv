@@ -49,8 +49,11 @@ processImage = (formReader, filename, data) ->
 		console.log '  Darkening Ink'
 		image = fv.filters.darkenInk image
 	# Require schema.
-	if args['schema']
-		formSchema = require args['schema']
+	if args['schema'] and typeof(args['schema']) is 'string'
+		if /\.json$/.test args['schema']
+			formSchema = JSON.parse(fs.readFileSync(args['schema']).toString())
+		else
+			formSchema = require args['schema']
 	# Read form.
 	formReader.image = image
 	result = formReader.find()
