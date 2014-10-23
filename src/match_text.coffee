@@ -204,6 +204,7 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 					box: boundingBox (word.box for word in candidateWords)
 					text: candidateText
 					words: candidateWords
+					used: false
 
 	# Insert epsilon variant when confident or nothing else was found.
 	epsilonConfidence = pixelsToConfidence pageBox, image
@@ -214,6 +215,7 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 			box: pageBox
 			text: ''
 			words: []
+			used: false
 
 	return variants
 
@@ -222,6 +224,13 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 # This process is content- and location-sensitive.
 module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage) ->
 	textFields = formSchema.fields.filter((field) -> field.type is 'text')
+	textFields.sort (a, b) -> 
+		deltaY = a.box.y - b.box.y
+		deltaX = a.box.x - b.box.x
+		if Math.abs(deltaY) < 20
+			return deltaX
+		else
+			return deltaY
 	image = rawImage.toGray()
 
 	# Find anchors to compensate for *very* inaccurate printing.
@@ -243,7 +252,7 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 	selectedVariants = []
 	wordUsage = []
 	for field in textFields
-		variants = variantsByPath[field.path]
+		variants = variantsByPath[field.path].filter (variant) -> not variant.used
 		# Choose variant.
 		#console.log field.path, variants.map (variant) -> variant.text
 		if variants.length > 1 and field.fieldSelector?
@@ -256,6 +265,10 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 		selectedVariants.push selectedVariant = variants[choice]
 		for word in selectedVariant.words
 			wordIndex = words.indexOf word
+			# Mark conflicting variants as used.
+			for wordVariant in variantsByWord[wordIndex]
+				wordVariant.used = true
+			# Mark word as used.
 			wordUsage[wordIndex] ?= []
 			wordUsage[wordIndex].push field.path
 
