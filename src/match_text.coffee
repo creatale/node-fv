@@ -135,6 +135,7 @@ wordsToConfidence = (words) ->
 
 # Compute confidence from pixels inside box.
 pixelsToConfidence = (box, image) ->
+	THRESHOLD = 0.96
 	# Sanitize box to image.
 	x = Math.max(0, Math.min(image.width - 1, box.x))
 	y = Math.max(0, Math.min(image.height - 1, box.y))
@@ -145,10 +146,11 @@ pixelsToConfidence = (box, image) ->
 		height: Math.max(0, Math.min(image.height - y, box.height))
 	return 50 if areaBox.width is 0 or areaBox.height is 0
 	# Search for pixel blobs and compute confidence from white pixels.
-	areaImage = image.crop(areaBox).dilate(3, 5).threshold(220)
+	areaImage = image.crop(areaBox).threshold(220)
 	whiteness = areaImage.histogram()[0]
-	if whiteness >= 0.9
-		return Math.round((whiteness - 0.9) * 1000)
+	if whiteness >= THRESHOLD
+		confidence = Math.round((whiteness - THRESHOLD) * (100 /  (1.0 - THRESHOLD)))
+		return confidence
 	else
 		return 0
 
