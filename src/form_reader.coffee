@@ -72,7 +72,7 @@ class Form
 					resultImage.drawBox(imageOffset(boxed.box, index), 2, 0, 0, 255, 0.5)
 					resultImage.drawBox(imageOffset(boxed.candidate, index), 2, 255, 0, 0)
 
-		for anchor, index in @anchors
+		for anchor, index in @anchors ? []
 			box =
 				x: anchor.word.box.x + anchor.offset.x
 				y: anchor.word.box.y + anchor.offset.y
