@@ -154,8 +154,7 @@ pixelsToConfidence = (box, image) ->
 	else
 		return 0
 
-# Find text variants and assign a priority:
-#   confident epsilon > content > unconfident epsilon
+# Find text variants.
 findVariants = (field, anchors, words, schemaToPage, image) ->
 	pageBox = schemaToPage field.box
 
@@ -172,7 +171,6 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 		y: pageBox.y
 		width: pageBox.width
 		height: pageBox.height
-		priority: 2
 	]
 	for word in closeWords
 		searchBoxes.push
@@ -180,19 +178,16 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 			y: word.box.y
 			width: pageBox.width
 			height: pageBox.height
-			priority: 1
 		searchBoxes.push
 			x: word.box.x
 			y: word.box.y
 			width: pageBox.width * 0.9
 			height: pageBox.height * 0.9
-			priority: 1
 		searchBoxes.push
 			x: word.box.x
 			y: word.box.y
 			width: pageBox.width * 1.1
 			height: pageBox.height * 1.1
-			priority: 1
 
 	# Map words to variants using search boxes.
 	variants = []
@@ -209,7 +204,6 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 					box: boundingBox (word.box for word in candidateWords)
 					text: candidateText
 					words: candidateWords
-					priority: searchBox.priority
 
 	# Insert epsilon variant when confident or nothing else was found.
 	epsilonConfidence = pixelsToConfidence pageBox, image
@@ -220,23 +214,8 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 			box: pageBox
 			text: ''
 			words: []
-			priority: if epsilonConfidence > 0 then 3 else 0
 
 	return variants
-
-# Filter variants and thus reduce conflicts.
-filterVariants = (variantsByPath, variantsByWord) ->
-	# Drop low priority variants, when high priority variants are available.
-	for _, wordVariants of variantsByWord
-		for wordVariant in wordVariants[1..]
-			pathVariants = variantsByPath[wordVariant.path]
-			hasOtherChoices = pathVariants.some (pathVariant) -> pathVariant.priority > wordVariant.priority
-			if hasOtherChoices
-				#console.log 'Pruned:', wordVariant.path, wordVariant.text
-				pathIndex = pathVariants.indexOf(wordVariant)
-				pathVariants.splice(pathIndex, 1) if pathIndex isnt -1
-				wordVariants.splice(wordVariants.indexOf(wordVariant), 1)
-	return
 
 # Match text to form schema.
 #
@@ -259,9 +238,6 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 				wordIndex = words.indexOf word
 				variantsByWord[wordIndex] ?= []
 				variantsByWord[wordIndex].push variant
-
-	# Filter variants.
-	#filterVariants variantsByPath, variantsByWord
 
 	# Reduce to fields.
 	selectedVariants = []
