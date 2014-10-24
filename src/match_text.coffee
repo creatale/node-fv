@@ -253,6 +253,9 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 	wordUsage = []
 	for field in textFields
 		variants = variantsByPath[field.path].filter (variant) -> not variant.used
+		# All variants are marked as used... TODO: Assign epsilon instead?
+		if variants.length is 0
+			variants = variantsByPath[field.path]
 		# Choose variant.
 		#console.log field.path, variants.map (variant) -> variant.text
 		if variants.length > 1 and field.fieldSelector?
