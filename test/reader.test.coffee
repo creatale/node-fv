@@ -16,7 +16,7 @@ describe 'FormReader', ->
 		form.match JSON.parse(fs.readFileSync(__dirname + schemaPath)), (err, data) ->
 			should.not.exist err
 			data.patientVorname.value.should.equal 'Maria'
-			data.patientName.value.should.equal 'Mustermann'
+			data.patientName.value.should.equal 'Musterfrau'
 			done()
 
 	it 'should find checkbox between boxes with low confidence', (done) ->

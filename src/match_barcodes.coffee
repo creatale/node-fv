@@ -13,7 +13,7 @@ module.exports.matchBarcodes = (formData, formSchema, barcodes, schemaToPage) ->
 	matchMap = {}
 	for barcode in barcodes
 		value = barcodeToValue barcode
-		validFields = barcodeFields.filter (field) -> not field.fieldValidator? or field.fieldValidator(value)
+		validFields = barcodeFields.filter (field) -> field.fieldValidator?(value)
 		for field in validFields
 			# If searchRadius is set, additionally filter matches by distance
 			if field.searchRadius > 0

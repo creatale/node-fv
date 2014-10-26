@@ -9,7 +9,7 @@ findAnchors = (textFields, words, schemaToPage) ->
 	for textField, fieldIndex in textFields
 		matches = []
 		for word, wordIndex in words when word.text.length > 0
-			if not textField.fieldValidator? or textField.fieldValidator(word.text)
+			if textField.fieldValidator?(word.text)
 				matches.push wordIndex
 		if matches.length is 1
 			word = words[matches[0]]
@@ -154,7 +154,8 @@ pixelsToConfidence = (box, image) ->
 	else
 		return 0
 
-# Find text variants.
+# Find text variants and assign a priority:
+#   valid content > valid epsilon > positional content > positional epsilon
 findVariants = (field, anchors, words, schemaToPage, image) ->
 	pageBox = schemaToPage field.box
 
@@ -196,8 +197,8 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 		if candidateWords.length > 0
 			candidateText = wordsToText candidateWords, field.extendedGapDetection
 			isDuplicate = variants.some (variant) -> variant.text is candidateText
-			isValid = not field.fieldValidator? or field.fieldValidator(candidateText)
-			if not isDuplicate and isValid
+			if not isDuplicate
+				isValid = field.fieldValidator?(candidateText) ? false
 				variants.push
 					path: field.path
 					confidence: wordsToConfidence candidateWords
@@ -205,17 +206,22 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 					text: candidateText
 					words: candidateWords
 					used: false
+					priority: if isValid then 0 else 1
 
 	# Insert epsilon variant when confident or nothing else was found.
 	epsilonConfidence = pixelsToConfidence pageBox, image
 	if epsilonConfidence > 0 or variants.length is 0
-		variants.push 
+		isValid = field.fieldValidator?('') ? false
+		variants.push
 			path: field.path
 			confidence: epsilonConfidence
 			box: pageBox
 			text: ''
 			words: []
 			used: false
+			priority: if isValid then 1 else 3
+
+	variants.sort (a, b) -> a.priority - b.priority
 
 	return variants
 

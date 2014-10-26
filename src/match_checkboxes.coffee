@@ -23,7 +23,7 @@ matchByWords = (formData, fields, words, schemaToPage, schemaToData) ->
 		closeIndex = findClosestShortWord words, schemaToPage(field.box), dataBox.width if closeIndex is -1
 		continue if closeIndex is -1
 		# Validate short words.
-		if not field.fieldValidator? or field.fieldValidator(words[closeIndex].text)
+		if field.fieldValidator?(words[closeIndex].text)
 			wordUsage[closeIndex] ?= []
 			wordUsage[closeIndex].push field.path
 			matchedFields.push field
