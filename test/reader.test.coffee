@@ -27,7 +27,7 @@ describe 'FormReader', ->
 				height: 500
 			words: []
 			fields: [
-				path: 'checkbox_YAY'
+				path: 'yay'
 				type: 'checkbox'
 				box:
 					x: 660
@@ -35,7 +35,7 @@ describe 'FormReader', ->
 					width: 60
 					height: 60
 			,
-				path: 'checkbox_NAY'
+				path: 'nay'
 				type: 'checkbox'
 				box:
 					x: 775
@@ -48,6 +48,6 @@ describe 'FormReader', ->
 		form = formReader.find()
 		form.match schema, (err, data) ->
 			should.not.exist err
-			data.checkbox_YAY.confidence.should.be.within(30, 70)
-			data.checkbox_NAY.confidence.should.be.within(30, 70)
+			data.yay.confidence.should.be.within(30, 70)
+			data.nay.confidence.should.be.within(30, 70)
 			done()

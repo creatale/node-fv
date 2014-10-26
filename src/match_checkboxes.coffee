@@ -54,12 +54,12 @@ matchByMark = (formData, fields, marks, schemaToPage) ->
 	for field in fields
 		# Find close marks using estimated locations (only page transform).
 		pageBox = schemaToPage field.box
-		nearDistance = pageBox.width
-		farDistance = pageBox.width * 3
+		nearDistance = pageBox.width * 0.95
+		farDistance = pageBox.width * 3.00
 		closeIndex = findClosestMark marks, pageBox, farDistance
 		if closeIndex is -1
 			# No marks with less than far distance found, thus false.
-			matches[field.path] = 
+			matches[field.path] =
 				index: -1
 				value: false
 				confidence: 100
@@ -73,7 +73,7 @@ matchByMark = (formData, fields, marks, schemaToPage) ->
 				box: pageBox
 		else
 			# Near mark found, thus use it.
-			matches[field.path] = 
+			matches[field.path] =
 				index: closeIndex
 				value: marks[closeIndex].checked
 				confidence: marks[closeIndex].confidence
@@ -90,14 +90,13 @@ matchByMark = (formData, fields, marks, schemaToPage) ->
 		if match.index is -1
 			fieldData.conflicts = []
 		else
-			fieldData.conflicts = if markUsage[match.index].length > 1 then markUsage[match.index] else []
+			fieldData.conflicts = markUsage[match.index].filter (path) -> path isnt field.path
 	return
-	
+
 # Match checkboxes to form schema.
 #
 # This process is content- and location-sensitive. Short words are preferred over marks.
-# XXX: false negatives are to be expected when words are invalidated!
-# XXX: do not use word confidence as checkbox confidence!
+# XXX: false negatives are to be expected when words are invalidated, this hurts valid vs. positional matching.
 module.exports.matchCheckboxes = (formData, formSchema, marks, words, schemaToPage, schemaToData) ->
 	checkboxFields = formSchema.fields.filter((field) -> field.type is 'checkbox')
 	assignedFields = matchByWords formData, checkboxFields, words, schemaToPage, schemaToData
