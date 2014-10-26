@@ -139,20 +139,21 @@ pixelsToConfidence = (box, image) ->
 	# Sanitize box to image.
 	x = Math.max(0, Math.min(image.width - 1, box.x))
 	y = Math.max(0, Math.min(image.height - 1, box.y))
-	areaBox =
+	cropBox =
 		x: x
 		y: y
 		width: Math.max(0, Math.min(image.width - x, box.width))
 		height: Math.max(0, Math.min(image.height - y, box.height))
-	return 50 if areaBox.width is 0 or areaBox.height is 0
-	# Search for pixel blobs and compute confidence from white pixels.
-	areaImage = image.crop(areaBox).threshold(220)
-	whiteness = areaImage.histogram()[0]
-	if whiteness >= THRESHOLD
-		confidence = Math.round((whiteness - THRESHOLD) * (100 /  (1.0 - THRESHOLD)))
-		return confidence
+	return 50 if cropBox.width is 0 or cropBox.height is 0
+	# Search for pixel blobs and compute confidence.
+	blobImage = image.crop(cropBox).dilate(3, 5).threshold(220)
+	blobs = blobImage.connectedComponents(8).filter (component) -> component.width > 8 and component.height > 14
+	if blobs.length > 0
+		box = boundingBox blobs
+		confidence = Math.round((box.width * box.height) / (blobImage.width * blobImage.height) * 100)
 	else
-		return 0
+		confidence = 100
+	return confidence
 
 # Find text variants and assign a priority:
 #   valid content > valid epsilon > positional content > positional epsilon
