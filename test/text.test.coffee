@@ -19,7 +19,7 @@ createFormSchema = (a, b, c) ->
 				y: 0
 				width: 500
 				height: 50
-			fieldValidator: (value) -> if not a? then true else value is a
+			fieldValidator: (value) -> value is a
 			fieldSelector: (choices) ->
 				that.called.push 'one'
 				return 0

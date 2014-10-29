@@ -135,7 +135,6 @@ wordsToConfidence = (words) ->
 
 # Compute confidence from pixels inside box.
 pixelsToConfidence = (box, image) ->
-	THRESHOLD = 0.96
 	# Sanitize box to image.
 	x = Math.max(0, Math.min(image.width - 1, box.x))
 	y = Math.max(0, Math.min(image.height - 1, box.y))
@@ -147,10 +146,11 @@ pixelsToConfidence = (box, image) ->
 	return 50 if cropBox.width is 0 or cropBox.height is 0
 	# Search for pixel blobs and compute confidence.
 	blobImage = image.crop(cropBox).dilate(3, 5).threshold(220)
-	blobs = blobImage.connectedComponents(8).filter (component) -> component.width > 8 and component.height > 14
+	blobs = blobImage.connectedComponents(8)
 	if blobs.length > 0
 		box = boundingBox blobs
-		confidence = Math.round((box.width * box.height) / (blobImage.width * blobImage.height) * 100)
+		blobRatio = (box.width * box.height) / (blobImage.width * blobImage.height)
+		confidence = Math.max(0, Math.round((0.4 - blobRatio) * 100))
 	else
 		confidence = 100
 	return confidence
