@@ -173,6 +173,7 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 		y: pageBox.y
 		width: pageBox.width
 		height: pageBox.height
+		priority: 0
 	]
 	for word in closeWords
 		searchBoxes.push
@@ -180,16 +181,19 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 			y: word.box.y
 			width: pageBox.width
 			height: pageBox.height
+			priority: 2
 		searchBoxes.push
 			x: word.box.x
 			y: word.box.y
 			width: pageBox.width * 0.9
 			height: pageBox.height * 0.9
+			priority: 3
 		searchBoxes.push
 			x: word.box.x
 			y: word.box.y
 			width: pageBox.width * 1.1
 			height: pageBox.height * 1.1
+			priority: 3
 
 	# Map words to variants using search boxes.
 	variants = []
@@ -207,11 +211,11 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 					text: candidateText
 					words: candidateWords
 					used: false
-					priority: if isValid then 0 else 2
+					priority: [isValid, searchBox.priority]
 
 	# Insert epsilon variant when confident or nothing else was found.
 	epsilonConfidence = pixelsToConfidence pageBox, image
-	if epsilonConfidence > 0 or variants.length is 0
+	if epsilonConfidence > 50 or variants.length is 0
 		isValid = field.fieldValidator?('') ? false
 		variants.push
 			path: field.path
@@ -220,9 +224,15 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 			text: ''
 			words: []
 			used: false
-			priority: if isValid then 1 else 3
+			priority: [isValid, 1]
 
-	variants.sort (a, b) -> a.priority - b.priority
+	variants.sort (a, b) ->
+		deltaValid = a.priority[0] - b.priority[0]
+		deltaPriority = a.priority[1] - b.priority[1]
+		if deltaValid is 0
+			return deltaPriority
+		else
+			return deltaValid
 
 	return variants
 
