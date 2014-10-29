@@ -207,7 +207,7 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 					text: candidateText
 					words: candidateWords
 					used: false
-					priority: if isValid then 0 else 1
+					priority: if isValid then 0 else 2
 
 	# Insert epsilon variant when confident or nothing else was found.
 	epsilonConfidence = pixelsToConfidence pageBox, image
