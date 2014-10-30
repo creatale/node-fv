@@ -203,7 +203,8 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 			candidateText = wordsToText candidateWords, field.extendedGapDetection
 			isDuplicate = variants.some (variant) -> variant.text is candidateText
 			if not isDuplicate
-				isValid = field.fieldValidator?(candidateText) ? false
+				isValid = if field.fieldValidator? then Boolean(field.fieldValidator(candidateText)) else true
+				continue unless isValid
 				variants.push
 					path: field.path
 					confidence: wordsToConfidence candidateWords
