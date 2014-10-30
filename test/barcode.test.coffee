@@ -16,7 +16,7 @@ createFormSchema = (a, b) ->
 				y: 0
 				width: 100
 				height: 50
-			fieldValidator: (value) ->
+			fieldValidator: if not a? then null else (value) ->
 				shouldHaveBarcode value
 				return value.type is a
 			fieldSelector: (choices) -> 
@@ -30,7 +30,7 @@ createFormSchema = (a, b) ->
 				y: 50
 				width: 100
 				height: 50
-			fieldValidator: (value) ->
+			fieldValidator: if not b? then null else (value) ->
 				shouldHaveBarcode value
 				return value.type is b
 		]
