@@ -41,6 +41,16 @@ module.exports.findBarcodes = (image, zxing) ->
 				if candidate.width < 0.3 * grayImage.width
 					clearedImage.clearBox candidate
 				code.box = boundingBox ({x: point.x, y: point.y, width: 1, height: 1} for point in code.points)
+				if code.box.width < 20
+					code.box.y -= QUIETZONE_WIDTH
+					code.box.x -= Math.round(candidate.width / 2)
+					code.box.width += candidate.width
+					code.box.height += QUIETZONE_WIDTH * 2
+				if code.box.height < 20
+					code.box.x -= QUIETZONE_WIDTH
+					code.box.y -= Math.round(candidate.height / 2)
+					code.box.height += candidate.height
+					code.box.width += QUIETZONE_WIDTH * 2
 				code.box.x += candidate.x - QUIETZONE_WIDTH
 				code.box.y += candidate.y - QUIETZONE_WIDTH
 				delete code.points
