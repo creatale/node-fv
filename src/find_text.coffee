@@ -72,6 +72,10 @@ module.exports.findText = (image, tesseract) ->
 	# Extract text lines.
 	tesseract.image = textImage
 	candidates = detectCandidates tesseract.thresholdImage()
+	candidatesFallback = detectCandidates textImage.threshold(247)
+	# Test if fallback should be used.
+	if candidates.length * 2 < candidatesFallback.length
+		candidates = candidatesFallback
 	for candidate in candidates
 		# Crop and recognize.
 		tesseract.image = textImage.crop candidate
