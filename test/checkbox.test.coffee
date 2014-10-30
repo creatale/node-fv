@@ -78,7 +78,7 @@ describe 'Checkbox recognizer', ->
 
 		it 'should tick "one" (word) and untick "two"', ->
 			formData = {}
-			formSchema = createFormSchema undefined, undefined
+			formSchema = createFormSchema 'X', undefined
 			words = [
 				confidence: 42
 				text: 'X'
