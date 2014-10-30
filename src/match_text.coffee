@@ -145,12 +145,12 @@ pixelsToConfidence = (box, image) ->
 		height: Math.max(0, Math.min(image.height - y, box.height))
 	return 50 if cropBox.width is 0 or cropBox.height is 0
 	# Search for pixel blobs and compute confidence.
-	blobImage = image.crop(cropBox).dilate(3, 5).threshold(220)
-	blobs = blobImage.connectedComponents(8)
+	blobImage = image.crop(cropBox).dilate(3, 5).threshold(240)
+	blobs = blobImage.connectedComponents(8).filter (box) -> box.width > 3 and box.height > 3
 	if blobs.length > 0
 		box = boundingBox blobs
 		blobRatio = (box.width * box.height) / (blobImage.width * blobImage.height)
-		confidence = Math.max(0, Math.round((0.4 - blobRatio) * 100))
+		confidence = Math.max(0, Math.round((0.33 - blobRatio) * 100))
 	else
 		confidence = 100
 	return confidence
@@ -253,6 +253,7 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 
 	# Find anchors to compensate for *very* inaccurate printing.
 	anchors = findAnchors textFields, words, schemaToPage
+	#console.log 'anchors', anchors
 
 	# Map words to variants.
 	variantsByPath = {}
