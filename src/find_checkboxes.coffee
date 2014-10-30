@@ -57,17 +57,17 @@ scoreToCheckState = (score) =>
 # Find filled checkboxes in image. This process is pretty prone to words, thus it assumes all
 # words have been removed from the image.
 module.exports.findCheckboxes = (image) ->
-	checkboxes = []
+	marks = []
 	clearedImage = new dv.Image image
 	binarizedImage = binarize image
 	candidates = detectCandidates binarizedImage
-	for candidate in candidates
-		score = scoreCandidate binarizedImage, candidate
+	for box in candidates
+		score = scoreCandidate binarizedImage, box
 		[checked, confidence] = scoreToCheckState score
 		if confidence > 0
-			checkboxes.push
-				box: candidate
+			marks.push
+				box: box
 				checked: checked
 				confidence: confidence
-			clearedImage.clearBox candidate
-	return [checkboxes, clearedImage]
+			clearedImage.clearBox box
+	return [marks, clearedImage]
