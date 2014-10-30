@@ -1,4 +1,4 @@
-unpack = require './unpack'
+{unpack, validate} = require './schema'
 {distanceVector, length, center} = require './math'
 
 barcodeToValue = (barcode) ->
@@ -13,7 +13,7 @@ module.exports.matchBarcodes = (formData, formSchema, barcodes, schemaToPage) ->
 	matchMap = {}
 	for barcode in barcodes
 		value = barcodeToValue barcode
-		validFields = barcodeFields.filter (field) -> field.fieldValidator?(value)
+		validFields = barcodeFields.filter (field) -> validate field, value, false
 		for field in validFields
 			# If searchRadius is set, additionally filter matches by distance
 			if field.searchRadius > 0

@@ -8,7 +8,7 @@ async = require 'async'
 {matchBarcodes} = require './match_barcodes'
 {matchText} = require './match_text'
 {matchCheckboxes} = require './match_checkboxes'
-unpack = require './unpack'
+{unpack} = require './schema'
 
 matchByPath = (field, formData) ->
 	return unless field?.box? and field?.path?

@@ -1,4 +1,4 @@
-unpack = require './unpack'
+{unpack, validate} = require './schema'
 {distance, length, boundingBox} = require './math'
 
 # Find anchor words (unique matches).
@@ -9,7 +9,7 @@ findAnchors = (textFields, words, schemaToPage) ->
 	for textField, fieldIndex in textFields
 		matches = []
 		for word, wordIndex in words when word.text.length > 0
-			if textField.fieldValidator?(word.text)
+			if validate textField, word.text, false
 				matches.push wordIndex
 		if matches.length is 1
 			word = words[matches[0]]
@@ -202,22 +202,22 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 		if candidateWords.length > 0
 			candidateText = wordsToText candidateWords, field.extendedGapDetection
 			isDuplicate = variants.some (variant) -> variant.text is candidateText
-			if not isDuplicate
-				isValid = if field.fieldValidator? then Boolean(field.fieldValidator(candidateText)) else true
-				continue unless isValid
-				variants.push
-					path: field.path
-					confidence: wordsToConfidence candidateWords
-					box: boundingBox (word.box for word in candidateWords)
-					text: candidateText
-					words: candidateWords
-					used: false
-					priority: [isValid, searchBox.priority]
+			continue if isDuplicate
+			isValid = validate field, candidateText, true
+			continue if not isValid
+			variants.push
+				path: field.path
+				confidence: wordsToConfidence candidateWords
+				box: boundingBox (word.box for word in candidateWords)
+				text: candidateText
+				words: candidateWords
+				used: false
+				priority: [isValid, searchBox.priority]
 
 	# Insert epsilon variant when confident or nothing else was found.
 	epsilonConfidence = pixelsToConfidence pageBox, image
 	if epsilonConfidence > 50 or variants.length is 0
-		isValid = field.fieldValidator?('') ? false
+		isValid = validate field, '', false
 		variants.push
 			path: field.path
 			confidence: epsilonConfidence

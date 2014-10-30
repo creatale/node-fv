@@ -1,4 +1,4 @@
-unpack = require './unpack'
+{unpack, validate} = require './schema'
 {estimateTransform} = require './estimate_transform'
 {distance} = require './math'
 
@@ -23,7 +23,7 @@ matchByWords = (formData, fields, words, schemaToPage, schemaToData) ->
 		closeIndex = findClosestShortWord words, schemaToPage(field.box), dataBox.width if closeIndex is -1
 		continue if closeIndex is -1
 		# Validate short words.
-		if field.fieldValidator?(words[closeIndex].text)
+		if validate field, words[closeIndex].text, false
 			wordUsage[closeIndex] ?= []
 			wordUsage[closeIndex].push field.path
 			matchedFields.push field
