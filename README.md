@@ -16,9 +16,17 @@ FormVision is a [node.js](http://nodejs.org) library for extracting data from sc
 
 ## Quick Start
 
-Install `fv` download [that image](https://github.com/creatale/node-fv/blob/master/test/data/m10-printed.png). Now run the command-line interface:
+Install `fv`, download [that image](https://github.com/creatale/node-fv/blob/master/test/data/m10-printed.png) and [that schema](https://github.com/creatale/node-fv/blob/master/test/data/m10-schema.json). Now run the command-line interface:
 
-`coffee bin/cli.coffee --lang=deu --remove-red m10-printed.png`
+- Print raw data extracted from image (without matching).
+    ```
+coffee bin/cli.coffee --remove-red --lang=deu m10-printed.png
+    ```
+
+- Print form data extracted from image using the specified schema (with matching).
+    ```
+coffee bin/cli.coffee --remove-red --lang=deu --schema=m10-schema.json m10-printed.png
+    ```
 
 ## What's next?
 
@@ -30,4 +38,4 @@ Here are some quick links to help you get started:
 ## License
 
 Licensed under the incredibly [permissive](http://en.wikipedia.org/wiki/Permissive_free_software_licence) [MIT License](http://creativecommons.org/licenses/MIT/). Copyright &copy; 2013-2014 Christoph Schulz.
-Dependencies may be licensed diffrently.
+Dependencies may be licensed differently.
