@@ -65,12 +65,13 @@ processImage = (formReader, filename, data) ->
 			console.log JSON.stringify(formData, null, 2)
 	else
 		logFilename = filename.replace(/\.([^\.]+)$/, '.log.$1')
-		fs.writeFile logFilename, result.toImage().toBuffer('png')
+		fs.writeFileSync logFilename, result.toImage().toBuffer('png')
 		object = result.toObject()
+		console.log '  Log: ' + logFilename
 		console.log '  Barcodes: ' + object.barcodes.map((data) -> data.type + ': ' + data.data)
 		console.log '  Checkboxes: ' + object.checkboxes.length + ' in total'
 		console.log '  Text: ', object.text.map((data) -> data.text).join(' ')
-		console.log '  Log Image: ' + logFilename
+	console.log ''
 
 # Help text.
 if args.help
