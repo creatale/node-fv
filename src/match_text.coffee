@@ -145,8 +145,8 @@ pixelsToConfidence = (box, image) ->
 		height: Math.max(0, Math.min(image.height - y, box.height))
 	return 50 if cropBox.width is 0 or cropBox.height is 0
 	# Search for pixel blobs and compute confidence.
-	blobImage = image.crop(cropBox).dilate(3, 5).threshold(248)
-	blobs = blobImage.connectedComponents(8).filter (box) -> box.width > 3 and box.height > 3
+	blobImage = image.crop(cropBox).threshold(248)
+	blobs = blobImage.connectedComponents(8).filter (box) -> box.width > 4 and box.height > 6
 	if blobs.length > 0
 		box = boundingBox blobs
 		blobRatio = (box.width * box.height) / (blobImage.width * blobImage.height)
