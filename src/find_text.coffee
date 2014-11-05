@@ -89,7 +89,7 @@ module.exports.findText = (image, tesseract) ->
 			# Store candidate.
 			word.candidate = candidate
 		words = words.concat(localWords)
-	# Remove words with more than three letters.
-	for word in words when word.text.length >= 3
+	# Remove words from image, but safeguard against removing 'noise' that may be a checkmark.
+	for word in words when word.text.length >= 6 or (word.text.length >= 3 and word.confidence >= 30)
 		clearedImage.clearBox word.box
 	return [words, clearedImage]
