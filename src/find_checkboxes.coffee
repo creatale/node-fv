@@ -16,6 +16,14 @@ detectCandidates = (binarizedImage) ->
 	for candidate in binarizedImage.dilate(3, 3).connectedComponents(8)
 		if 0.5 < candidate.width / candidate.height < 5 and 10 < candidate.width < (binarizedImage.width / 3)
 			candidates.push candidate
+		else if candidate.width > (binarizedImage.width / 3)
+			# This is probably a decorative box on the form. However, discarding it may conceal a mark
+			# which just happens to touch its border. Open image section and scan for more candidates.
+			for innerCandidate in binarizedImage.crop(candidate).erode(3, 3).dilate(5, 5).connectedComponents(8)
+				if 0.5 < innerCandidate.width / innerCandidate.height < 2 and 20 < innerCandidate.width < (binarizedImage.width / 3)
+					innerCandidate.x += candidate.x
+					innerCandidate.y += candidate.y
+					candidates.push innerCandidate
 	return candidates
 
 # Classify potentially checked checkboxes by computing a weighted score for filling.
