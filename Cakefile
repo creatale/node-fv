@@ -8,8 +8,8 @@ npm = cmd 'npm'
 mocha = cmd 'mocha'
 
 task 'build', 'Compile CoffeeScript', ->
-	coffee = cmd __dirname + '/node_modules/coffee-script/bin/coffee'
-	spawn coffee, '-b -o lib -c src'.split(' '), {cwd: __dirname, stdio: 'inherit'}
+	coffee = __dirname + '/node_modules/coffee-script/bin/coffee'
+	spawn 'node', [coffee, '-b', '-o', 'lib', '-c', 'src'], {cwd: __dirname, stdio: 'inherit'}
 
 task 'install', 'Install node.js packages', ->
 	spawn npm, ['install'], {cwd: '.', stdio: 'inherit'}
