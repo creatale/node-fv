@@ -8,3 +8,4 @@
 node_modules
 test/log/*.png
 test/log/*.html
+lib/

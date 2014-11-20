@@ -28,15 +28,18 @@
     "url": "git://github.com/creatale/node-fv.git"
   },
   "dependencies": {
-    "coffee-script": "^1.8.0",
     "async": "^0.9.0",
     "dv": "^1.8.0",
     "minimist": "^1.1.0",
     "glob": "^4.0.5"
   },
   "devDependencies": {
+    "coffee-script": "^1.8.0",
     "chai": "^1.9.1",
     "coffee-coverage": "^0.4.2"
+  },
+  "scripts": {
+  	"prepublish": "cake build"
   },
   "license": "MIT"
 }
