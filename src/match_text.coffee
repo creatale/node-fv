@@ -242,6 +242,8 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 # This process is content- and location-sensitive.
 module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage) ->
 	textFields = formSchema.fields.filter((field) -> field.type is 'text')
+	return {} if textFields.length is 0
+	
 	textFields.sort (a, b) -> 
 		deltaY = a.box.y - b.box.y
 		deltaX = a.box.x - b.box.x
@@ -266,6 +268,23 @@ module.exports.matchText = (formData, formSchema, words, schemaToPage, rawImage)
 				wordIndex = words.indexOf word
 				variantsByWord[wordIndex] ?= []
 				variantsByWord[wordIndex].push variant
+	
+	# Solve simple conflicts automatically (before passing to fieldSelector).
+	# For the case that a field has only a single one-word variant available, remove that option from
+	# everything else (except if this would in turn bring those fields' variants to zero).
+	for field in textFields
+		variants = variantsByPath[field.path]
+		if variants.length is 1 and variants[0].words.length is 1
+			word = variants[0].words[0]
+			wordIndex = words.indexOf word
+			for variant in variantsByWord[wordIndex]
+				continue if variant.path is field.path
+				conflictingVariants = variantsByPath[variant.path]
+				if conflictingVariants.length > 1
+					#console.log 'Removing ' + JSON.stringify(variant.text) + ' from ' + variant.path +
+					#	' because ' + JSON.stringify(word.text) + ' is the only valid option for ' + field.path
+					conflictingVariants.splice conflictingVariants.indexOf(variant), 1
+			
 
 	# Reduce to fields.
 	selectedVariants = []
