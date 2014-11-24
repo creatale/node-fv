@@ -61,6 +61,12 @@ detectCandidates = (binarizedImage, fontWidth = 20, fontHeight = 30) ->
 	boxes = mergeBoxes regions, intersectBox
 	return boxes
 
+isFuzzyEqual = (wordA, wordB) ->
+	return Math.abs(wordA.box.x - wordB.box.x) < 5 and
+		Math.abs(wordA.box.y - wordB.box.y) < 5 and
+		Math.abs(wordA.box.width - wordB.box.width) < 10 and
+		Math.abs(wordA.box.height - wordB.box.height) < 10
+
 # Use given *Tesseract* instance to find all text grouped as words along with
 # confidence and boxes.
 module.exports.findText = (image, tesseract) ->
@@ -89,6 +95,13 @@ module.exports.findText = (image, tesseract) ->
 			# Store candidate.
 			word.candidate = candidate
 		words = words.concat(localWords)
+	# Remove duplicate words caused by overlapping candidates.
+	uniqueWords = []
+	for word in words[..]
+		if uniqueWords.some(isFuzzyEqual.bind(null, word))
+			words.splice(words.indexOf(word), 1)
+		else
+			uniqueWords.push word
 	# Remove words from image, but safeguard against removing 'noise' that may be a checkmark.
 	for word in words when word.text.length >= 6 or (word.text.length >= 3 and word.confidence >= 30)
 		clearedImage.clearBox word.box
