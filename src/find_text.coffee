@@ -11,13 +11,13 @@ detectLineMask = (image, minLineLength) ->
 	return lineMask
 
 mergeBoxes = (boxes, predicate) ->
-	# Initialize a (region, box)-tuple set.
-	regions = (region for _, region in boxes)
+	# Initialize regions with unique indices.
+	regions = [0...boxes.length]
 	# Merge regions until predicate can no longer be applied.
 	done = false
 	while not done
 		done = true
-		# Merge adjacent regions.
+		# Merge regions (non-transitive).
 		for box, i in boxes
 			for otherBox, j in boxes[i + 1..] 
 				jj = j + i + 1
@@ -25,7 +25,7 @@ mergeBoxes = (boxes, predicate) ->
 					region = Math.min(regions[jj], regions[i])
 					regions[i] = regions[jj] = region
 					done = false
-		# Propagate merges to non-adjacent regions.
+		# Propagate merges (transitive).
 		for i in [0..regions.length]
 			while regions[regions[i]] isnt regions[i]
 				regions[i] = regions[regions[i]]
