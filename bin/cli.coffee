@@ -6,7 +6,7 @@ args = require('minimist')(process.argv[2..], boolean: true)
 glob = require 'glob'
 fs = require 'fs'
 dv = require 'dv'
-fv = require __dirname + '/../lib/fv'
+fv = require __dirname + '/../src/index'
 
 printHelp = ->
 	console.log ['Usage: cli [OPTION]... FILES'

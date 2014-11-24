@@ -22,7 +22,7 @@
   "contributors": [
     "Wolfgang Fellger <wolfgang.fellger@creatale.de>"
   ],
-  "main": "./lib/fv",
+  "main": "./lib/index",
   "repository": {
     "type": "git",
     "url": "git://github.com/creatale/node-fv.git"
