@@ -10,18 +10,18 @@ detectLineMask = (image, minLineLength) ->
 		lineMask.drawLine line.p1, line.p2, 7, 'set'
 	return lineMask
 
-mergeBoxes = (boxes, predicate) ->
+mergeRegions = (items, predicate) ->
 	# Initialize regions with unique indices.
-	regions = [0...boxes.length]
+	regions = [0...items.length]
 	# Merge regions until predicate can no longer be applied.
 	done = false
 	while not done
 		done = true
 		# Merge regions (non-transitive).
-		for box, i in boxes
-			for otherBox, j in boxes[i + 1..] 
+		for item, i in items
+			for otherItem, j in items[i + 1..] 
 				jj = j + i + 1
-				if regions[jj] isnt regions[i] and predicate(box, otherBox)
+				if regions[jj] isnt regions[i] and predicate(item, otherItem)
 					region = Math.min(regions[jj], regions[i])
 					regions[i] = regions[jj] = region
 					done = false
@@ -29,16 +29,7 @@ mergeBoxes = (boxes, predicate) ->
 		for i in [0..regions.length]
 			while regions[regions[i]] isnt regions[i]
 				regions[i] = regions[regions[i]]
-	# Group boxes by region.
-	boxesByRegion = {}
-	for region, boxIndex in regions
-		boxesByRegion[region] ?= []
-		boxesByRegion[region].push(boxes[boxIndex])
-	# Compute bounding box of each region.
-	boundingBoxes = []
-	for region, boxes of boxesByRegion
-		boundingBoxes.push(boundingBox(boxes))
-	return boundingBoxes
+	return regions
 
 isSameBlock = (fontWidth, fontHeight) ->
 	return (boxA, boxB) ->
@@ -55,17 +46,31 @@ detectCandidates = (binarizedImage, fontWidth = 20, fontHeight = 30) ->
 	smearWidth = (1 * fontWidth) + fontWidth % 2
 	smearHeight = (0.25 * fontHeight) + fontHeight % 2
 	boxes = binarizedImage.dilate(smearWidth, smearHeight).connectedComponents(8).filter(hasLetterSize)
-	# Merge letters to text blocks.
-	regions = mergeBoxes boxes, isSameBlock(fontWidth, fontHeight)
-	# Merge regions again with simple overlapping test; Tesseract may read content twice otherwise.
-	boxes = mergeBoxes regions, intersectBox
-	return boxes
+	# Merge letter boxes to text regions.
+	regions = mergeRegions boxes, isSameBlock(fontWidth, fontHeight)
+	boxesByRegion = {}
+	for region, boxIndex in regions
+		boxesByRegion[region] ?= []
+		boxesByRegion[region].push(boxes[boxIndex])
+	candidates = (boxes for _, boxes of boxesByRegion)
+	return candidates
 
-isFuzzyEqual = (wordA, wordB) ->
-	return Math.abs(wordA.box.x - wordB.box.x) < 5 and
-		Math.abs(wordA.box.y - wordB.box.y) < 5 and
-		Math.abs(wordA.box.width - wordB.box.width) < 10 and
-		Math.abs(wordA.box.height - wordB.box.height) < 10
+# Clone area of an image from boxes
+cloneUsingRegion = (image, boxes) ->
+	cloneBox = boundingBox boxes
+	cloneImage = new dv.Image cloneBox.width, cloneBox.height, image.depth
+	cloneImage.clearBox
+		x: 0
+		y: 0
+		width: cloneBox.width
+		height: cloneBox.height
+	for box in boxes
+		cloneImage.drawImage image.crop(box),
+			x: box.x - cloneBox.x
+			y: box.y - cloneBox.y
+			width: box.width
+			height: box.height
+	return [cloneImage, cloneBox]
 
 # Use given *Tesseract* instance to find all text grouped as words along with
 # confidence and boxes.
@@ -79,29 +84,25 @@ module.exports.findText = (image, tesseract) ->
 	tesseract.image = textImage
 	candidates = detectCandidates tesseract.thresholdImage()
 	# Test if fallback should be used.
-	if candidates.length < 35
-		candidatesFallback = detectCandidates textImage.threshold(248)
-		if candidates.length * 2 < candidatesFallback.length
-			candidates = candidatesFallback
-	for candidate in candidates
+	#if candidates.length < 35
+	#	candidatesFallback = detectCandidates textImage.threshold(248)
+	#	if candidates.length * 2 < candidatesFallback.length
+	#		candidates = candidatesFallback
+	for candidateBoxes in candidates
 		# Crop and recognize.
-		tesseract.image = textImage.crop candidate
-		tesseract.pageSegMode = if candidate.height < 60 then 'single_line' else 'single_block'
+		[cloneImage, cloneBox] = cloneUsingRegion image, candidateBoxes
+		tesseract.image = cloneImage
+		tesseract.pageSegMode = if cloneBox.height < 60 then 'single_line' else 'single_block'
 		localWords = tesseract.findWords()
 		for word in localWords
 			# Transform back.
-			word.box.x += candidate.x
-			word.box.y += candidate.y
+			word.box.x += cloneBox.x
+			word.box.y += cloneBox.y
 			# Store candidate.
-			word.candidate = candidate
+			word.candidate = candidateBoxes[..]
 		words = words.concat(localWords)
-	# Remove duplicate words caused by overlapping candidates.
-	uniqueWords = []
-	for word in words[..]
-		if uniqueWords.some(isFuzzyEqual.bind(null, word))
-			words.splice(words.indexOf(word), 1)
-		else
-			uniqueWords.push word
+	# Filter words with tiny boxes.
+	words = words.filter (word) -> word.box.width > 5 and word.box.height > 5
 	# Remove words from image, but safeguard against removing 'noise' that may be a checkmark.
 	for word in words when word.text.length >= 6 or (word.text.length >= 3 and word.confidence >= 30)
 		clearedImage.clearBox word.box
