@@ -64,7 +64,7 @@ processImage = (formReader, filename, data) ->
 				return				
 			console.log JSON.stringify(formData, null, 2)
 	else
-		logFilename = filename.replace(/\.([^\.]+)$/, '.log.$1')
+		logFilename = filename.replace(/\.([^\.]+)$/, '-log.$1')
 		fs.writeFileSync logFilename, result.toImage().toBuffer('png')
 		object = result.toObject()
 		console.log '  Log: ' + logFilename
