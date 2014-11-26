@@ -72,22 +72,8 @@ cloneUsingRegion = (image, boxes) ->
 			height: box.height
 	return [cloneImage, cloneBox]
 
-# Use given *Tesseract* instance to find all text grouped as words along with
-# confidence and boxes.
-module.exports.findText = (image, tesseract) ->
+findWords = (candidates, image, tesseract) ->
 	words = []
-	clearedImage = new dv.Image image
-	# Remove long lines.
-	lineMask = detectLineMask image, 45
-	textImage = image.toColor().add lineMask.toColor()
-	# Extract text lines.
-	tesseract.image = textImage
-	candidates = detectCandidates tesseract.thresholdImage()
-	# Test if fallback should be used.
-	#if candidates.length < 35
-	#	candidatesFallback = detectCandidates textImage.threshold(248)
-	#	if candidates.length * 2 < candidatesFallback.length
-	#		candidates = candidatesFallback
 	for candidateBoxes in candidates
 		# Crop and recognize.
 		[cloneImage, cloneBox] = cloneUsingRegion image, candidateBoxes
@@ -103,6 +89,33 @@ module.exports.findText = (image, tesseract) ->
 		words = words.concat(localWords)
 	# Filter words with tiny boxes.
 	words = words.filter (word) -> word.box.width > 5 and word.box.height > 5
+	return words
+
+sumWordsLength = (words) ->
+	longWords = words.filter((word) -> word.text.length > 3)
+	return longWords.reduce(((sum, word) -> sum + word.text.length), 0)
+
+# Use given *Tesseract* instance to find all text grouped as words along with
+# confidence and boxes.
+module.exports.findText = (image, tesseract) ->
+	clearedImage = new dv.Image image
+	# Remove long lines.
+	lineMask = detectLineMask image, 45
+	textImage = image.toColor().add lineMask.toColor()
+	# Find words using Tesseract's thresholding.
+	tesseract.image = textImage
+	candidates = detectCandidates tesseract.thresholdImage()
+	words = findWords candidates, image, tesseract
+	# Test if fallback should be used.
+	wordsLength = sumWordsLength(words) 
+	if wordsLength < 75
+		# Assume almost no ink was used and retry.
+		fallbackCandidates = detectCandidates textImage.threshold(248)
+		fallbackWords = findWords fallbackCandidates, image, tesseract
+		fallbackWordsLength = sumWordsLength(fallbackWords) 
+		if (wordsLength * 1.3) < fallbackWordsLength
+			#console.log '**Using Fallback**', wordsLength, fallbackWordsLength
+			words = fallbackWords
 	# Remove words from image, but safeguard against removing 'noise' that may be a checkmark.
 	for word in words when word.text.length >= 6 or (word.text.length >= 3 and word.confidence >= 30)
 		clearedImage.clearBox word.box
