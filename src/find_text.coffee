@@ -91,10 +91,6 @@ findWords = (candidates, image, tesseract) ->
 	words = words.filter (word) -> word.box.width > 5 and word.box.height > 5
 	return words
 
-sumWordsLength = (words) ->
-	longWords = words.filter((word) -> word.text.length > 3)
-	return longWords.reduce(((sum, word) -> sum + word.text.length), 0)
-
 # Use given *Tesseract* instance to find all text grouped as words along with
 # confidence and boxes.
 module.exports.findText = (image, tesseract) ->
@@ -104,18 +100,8 @@ module.exports.findText = (image, tesseract) ->
 	textImage = image.toColor().add lineMask.toColor()
 	# Find words using Tesseract's thresholding.
 	tesseract.image = textImage
-	candidates = detectCandidates tesseract.thresholdImage()
+	candidates = detectCandidates image.toGray().otsuAdaptiveThreshold(128, 128, 0, 0, 0).image
 	words = findWords candidates, image, tesseract
-	# Test if fallback should be used.
-	wordsLength = sumWordsLength(words) 
-	if wordsLength < 75
-		# Assume almost no ink was used and retry.
-		fallbackCandidates = detectCandidates textImage.threshold(248)
-		fallbackWords = findWords fallbackCandidates, image, tesseract
-		fallbackWordsLength = sumWordsLength(fallbackWords) 
-		if (wordsLength * 1.3) < fallbackWordsLength
-			#console.log '**Using Fallback**', wordsLength, fallbackWordsLength
-			words = fallbackWords
 	# Remove words from image, but safeguard against removing 'noise' that may be a checkmark.
 	for word in words when word.text.length >= 6 or (word.text.length >= 3 and word.confidence >= 30)
 		clearedImage.clearBox word.box
