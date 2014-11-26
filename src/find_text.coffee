@@ -65,10 +65,10 @@ cloneUsingRegion = (image, boxes) ->
 		width: cloneBox.width
 		height: cloneBox.height
 	for box in boxes
-		cloneImage.drawImage image.crop(box),
+		cloneImage.drawImage image.crop(box.x, box.y, box.width + 25, box.height),
 			x: box.x - cloneBox.x
 			y: box.y - cloneBox.y
-			width: box.width
+			width: box.width + 25
 			height: box.height
 	return [cloneImage, cloneBox]
 
