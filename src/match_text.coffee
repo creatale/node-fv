@@ -8,7 +8,7 @@ findAnchors = (textFields, words, schemaToPage) ->
 	anchorWords = []
 	for textField, fieldIndex in textFields
 		matches = []
-		for word, wordIndex in words when word.text.length > 0
+		for word, wordIndex in words when word.text.length > 3
 			if validate textField, word.text, false
 				matches.push wordIndex
 		if matches.length is 1
