@@ -1,4 +1,4 @@
-# FormVision
+# FormVision [![NPM version](https://badge.fury.io/js/fv.png)](http://badge.fury.io/js/fv) [![Dependency Status](https://david-dm.org/creatale/node-fv.png)](https://david-dm.org/creatale/node-fv) [![devDependency Status](https://david-dm.org/creatale/node-fv/dev-status.png)](https://david-dm.org/creatale/node-fv#info=devDependencies)
 
 FormVision is a [node.js](http://nodejs.org) library for extracting data from scanned forms.
 
