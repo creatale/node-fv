@@ -197,8 +197,8 @@ describe 'Text', ->
 	describe 'by validator', ->
 		it 'should match 1 word to "one" and drop others', ->
 			formData = {}
-			formSchema = createFormSchema 'a75', undefined, undefined
-			[image, words] = createWords 'x100\na75\n          '
+			formSchema = createFormSchema 'test75', undefined, undefined
+			[image, words] = createWords 'x100\ntest75\n          '
 			schemaToPage = createSchemaToPage image
 			matchText(formData, formSchema, words, schemaToPage, image)
 			formData.one.confidence.should.equal words[1].confidence
