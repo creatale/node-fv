@@ -97,10 +97,10 @@ module.exports.findText = (image, tesseract) ->
 	clearedImage = new dv.Image image
 	# Remove long lines.
 	lineMask = detectLineMask image, 45
-	textImage = image.toColor().add lineMask.toColor()
-	# Find words using Tesseract's thresholding.
+	textImage = image.toGray().add lineMask.toGray()
+	# Find words using a simple Otsu thresholding.
 	tesseract.image = textImage
-	candidates = detectCandidates image.toGray().otsuAdaptiveThreshold(128, 128, 0, 0, 0).image
+	candidates = detectCandidates textImage.otsuAdaptiveThreshold(128, 128, 0, 0, 0).image
 	words = findWords candidates, image, tesseract
 	# Remove words from image, but safeguard against removing 'noise' that may be a checkmark.
 	for word in words when word.text.length >= 6 or (word.text.length >= 3 and word.confidence >= 30)
