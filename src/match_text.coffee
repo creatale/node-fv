@@ -228,7 +228,7 @@ findVariants = (field, anchors, words, schemaToPage, image) ->
 			priority: [isValid, 1]
 
 	variants.sort (a, b) ->
-		deltaValid = a.priority[0] - b.priority[0]
+		deltaValid = b.priority[0] - a.priority[0]
 		deltaPriority = a.priority[1] - b.priority[1]
 		if deltaValid is 0
 			return deltaPriority
