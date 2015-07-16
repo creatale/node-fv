@@ -6,9 +6,9 @@ QUIETZONE_WIDTH = 35
 
 # Find potential barcodes in *image*.
 detectCandidates = (image) ->
-	blobImage = image.thin('bg', 8, 5).dilate(3, 3)
+	blobImage = image.thin('bg', 8, 5).dilate(5, 3)
 	blobMap = blobImage.distanceFunction(8)
-	blobMask = blobMap.threshold(10).invert().dilate(44, 22)
+	blobMask = blobMap.threshold(10).invert().dilate(42, 22)
 	return blobMask.connectedComponents(8)
 
 # Clone image with artificial quiet zone.
