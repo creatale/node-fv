@@ -34,19 +34,21 @@ module.exports.matchBarcodes = (formData, formSchema, barcodes, schemaToPage) ->
 			if matches.length > 1 and field.fieldSelector?
 				values = matches.map (match) -> barcodeToValue match.barcode
 				choice = field.fieldSelector values
+				confidence = 100
 				if choice not of values
 					throw new Error('Returned choice index out of bounds')
 			else
 				choice = 0
+				confidence = 100 / matches.length
 			# Assign to field.
 			fieldData = unpack formData, field.path
 			fieldData.value = barcodeToValue matches[choice].barcode
-			fieldData.confidence = 100
+			fieldData.confidence = confidence
 			fieldData.box = matches[choice].barcode.box
 			fieldData.conflicts = matches[choice].paths.filter (path) -> path isnt field.path
 		else
 			fieldData = unpack formData, field.path
-			fieldData.confidence = 100
+			fieldData.confidence = 0
 			fieldData.box = schemaToPage field.box
 			fieldData.conflicts = []
 	return

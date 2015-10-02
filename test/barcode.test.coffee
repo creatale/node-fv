@@ -156,7 +156,7 @@ describe 'Barcode', ->
 			(formData.one.value.data in [barcodes[0].data, barcodes[1].data]).should.be.true
 			(formData.one.box in [barcodes[0].box, barcodes[1].box]).should.be.true
 			formSchema.called.should.contain 'one'
-			formData.two.confidence.should.equal 100
+			formData.two.confidence.should.equal 50
 			formData.two.conflicts.should.have.length 1
 			(formData.two.value.data in [barcodes[0].data, barcodes[1].data]).should.be.true
 			(formData.two.box in [barcodes[0].box, barcodes[1].box]).should.be.true
