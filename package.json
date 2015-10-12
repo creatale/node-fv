@@ -29,17 +29,19 @@
   },
   "dependencies": {
     "async": "^1.3.0",
-    "dv": "1.9.3",
+    "dv": "1.9.4",
     "minimist": "^1.1.0",
     "glob": "^5.0.12"
   },
   "devDependencies": {
+    "chai": "^3",
+    "coffee-coverage": "^0.6.2",
     "coffee-script": "^1.8.0",
-    "chai": "^1.9.1",
-    "coffee-coverage": "^0.4.2"
+    "mocha": "^2.3.3"
   },
   "scripts": {
-  	"prepublish": "cake build"
+    "prepublish": "cake build",
+    "test": "node_modules/.bin/mocha"
   },
   "license": "MIT"
 }
