@@ -58,7 +58,7 @@ createBarcodes = (a, b) -> [
 
 shouldHaveBarcode = (barcode, withBox = false) ->
 	should.exist barcode.type
-	should.exist barcode.buffer
+	# should.exist barcode.buffer
 	should.exist barcode.data
 	if withBox
 		should.exist barcode.box
@@ -82,7 +82,7 @@ describe 'Barcode', ->
 			barcodes.should.have.length 4
 			for barcode in barcodes
 				shouldHaveBarcode barcode, true
-				barcode.buffer.toString('ascii').should.equal ''
+				# barcode.buffer.toString('ascii').should.equal ''
 				barcode.data.should.equal '3000001060'
 				barcode.type.should.equal 'ITF'
 			imageOut.should.not.equal barcodesImage
