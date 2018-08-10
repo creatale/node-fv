@@ -82,7 +82,7 @@ describe 'Barcode', ->
 			barcodes.should.have.length 4
 			for barcode in barcodes
 				shouldHaveBarcode barcode, true
-				barcode.buffer.toString('ascii').should.equal '3000001060'
+				barcode.buffer.toString('ascii').should.equal ''
 				barcode.data.should.equal '3000001060'
 				barcode.type.should.equal 'ITF'
 			imageOut.should.not.equal barcodesImage

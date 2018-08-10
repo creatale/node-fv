@@ -8,7 +8,7 @@ npm = cmd 'npm'
 mocha = cmd 'mocha'
 
 task 'build', 'Compile CoffeeScript', ->
-	coffee = __dirname + '/node_modules/coffee-script/bin/coffee'
+	coffee = __dirname + '/node_modules/coffeescript/bin/coffee'
 	spawn 'node', [coffee, '-b', '-o', 'lib', '-c', 'src'], {cwd: __dirname, stdio: 'inherit'}
 
 task 'install', 'Install node.js packages', ->
@@ -18,7 +18,7 @@ task 'update', 'Update node.js packages', ->
 	spawn npm, ['update'], {cwd: '.', stdio: 'inherit'}
 
 task 'test', 'Run tests.', ->
-	mocha = spawn mocha, ['--reporter', 'spec'], {cwd: '.', stdio: 'inherit'}
+	mocha = spawn mocha, ['--reporter', 'spec', 'test/*.coffee'], {cwd: '.', stdio: 'inherit'}
 	mocha.on 'exit', (status) ->
 		return process.exit(status)
 
