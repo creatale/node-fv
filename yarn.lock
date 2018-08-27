@@ -222,15 +222,15 @@ diff@3.5.0:
   version "3.5.0"
   resolved "https://registry.yarnpkg.com/diff/-/diff-3.5.0.tgz#800c0dd1e0a8bfbc95835c202ad220fe317e5a12"
 
-dv.data@1.3.0:
-  version "1.3.0"
-  resolved "https://registry.yarnpkg.com/dv.data/-/dv.data-1.3.0.tgz#f6e98a779e3c203887bd2324233d99a19ecbc86f"
+dv.data@^1.4.0:
+  version "1.4.0"
+  resolved "https://registry.yarnpkg.com/dv.data/-/dv.data-1.4.0.tgz#a97338cf4b2467d5e500a9dd9e64f23c0cb6c5a3"
 
-dv@^2.0.1:
-  version "2.0.1"
-  resolved "https://registry.yarnpkg.com/dv/-/dv-2.0.1.tgz#703e5e649c917d5bb983ad7688d33300dd61cd17"
+dv@^2.1.0:
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/dv/-/dv-2.1.0.tgz#93e97946017f5dab03a5f871e5599309c4fd20f5"
   dependencies:
-    dv.data "1.3.0"
+    dv.data "^1.4.0"
     nan "^2.10.0"
   optionalDependencies:
     windows-build-tools "^3.1.0"
