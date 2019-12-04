@@ -226,9 +226,9 @@ dv.data@^1.4.0:
   version "1.4.0"
   resolved "https://registry.yarnpkg.com/dv.data/-/dv.data-1.4.0.tgz#a97338cf4b2467d5e500a9dd9e64f23c0cb6c5a3"
 
-dv@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/dv/-/dv-2.1.0.tgz#93e97946017f5dab03a5f871e5599309c4fd20f5"
+dv@^2.2.0:
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/dv/-/dv-2.2.0.tgz#5424040cf2e6e920303d0e9ebd237bd3b89aaccd"
   dependencies:
     dv.data "^1.4.0"
     nan "^2.10.0"
@@ -480,8 +480,8 @@ load-json-file@^1.0.0:
     strip-bom "^2.0.0"
 
 lodash@^4.14.0, lodash@^4.17.10:
-  version "4.17.10"
-  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.10.tgz#1b7793cf7259ea38fb3661d4d38b3260af8ae4e7"
+  version "4.17.15"
+  resolved "https://registry.yarnpkg.com/lodash/-/lodash-4.17.15.tgz#b447f6670a0455bbfeedd11392eff330ea097548"
 
 loud-rejection@^1.0.0:
   version "1.6.0"
